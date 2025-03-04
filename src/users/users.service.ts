@@ -1,43 +1,48 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { EntityMapper } from 'src/common/helpers/entity-mapper.helper';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
+    const alreadyCreated = await this.prisma.user.findFirst({
+      where: { email: createUserDto.email },
+    });
+    if (alreadyCreated) {
+      throw new Error('User with this E-mail already exists');
+    }
     const hashedPw: string = await this.hashPassword(createUserDto.password);
-
-    const prismaUser = this.prisma.user.create({
+    const prismaUser = await this.prisma.user.create({
       data: {
         ...createUserDto,
         password: hashedPw,
       },
     });
-
-    return EntityMapper.toUserEntity(prismaUser);
+    const user = new User(prismaUser);
+    return user;
   }
 
   async findAll(): Promise<User[]> {
     const prismaUsers = await this.prisma.user.findMany();
-    return EntityMapper.toEntities(prismaUsers, EntityMapper.toUserEntity);
+    const users = prismaUsers.map((prismaUser) => new User(prismaUser));
+    return users;
   }
 
   async findOne(id: string): Promise<User> {
-    const user = await this.prisma.user.findUnique({
+    const prismaUser = await this.prisma.user.findUnique({
       where: { id },
     });
 
-    if (!user) {
+    if (!prismaUser) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    return EntityMapper.toUserEntity(user);
+    return new User(prismaUser);
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -49,7 +54,7 @@ export class UsersService {
       return null;
     }
 
-    return EntityMapper.toUserEntity(prismaUser);
+    return new User(prismaUser);
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
@@ -59,19 +64,20 @@ export class UsersService {
       updateUserDto.password = await this.hashPassword(updateUserDto.password);
     }
 
-    const updatedPrismaUser = this.prisma.user.update({
+    const updatedPrismaUser = await this.prisma.user.update({
       where: { id },
       data: updateUserDto,
     });
 
-    return EntityMapper.toUserEntity(updatedPrismaUser);
+    return new User(updatedPrismaUser);
   }
 
-  async remove(id: string): Promise<void> {
-    await this.findOne(id);
+  async remove(id: string): Promise<User> {
+    const toDeleteUser = await this.findOne(id);
     await this.prisma.user.delete({
       where: { id },
     });
+    return new User(toDeleteUser);
   }
 
   private async hashPassword(password: string): Promise<string> {

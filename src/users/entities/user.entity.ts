@@ -23,7 +23,7 @@ export class User {
     Object.assign(this, partial);
   }
 
-  get fullName(): string {
+  getFullName(): string {
     return `${this.firstName} ${this.lastName}`;
   }
 }
