@@ -12,10 +12,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { UserResponseDto } from './dto/user-response.dto';
-import { UsersService } from './users.service';
-import { UserRequestDto } from './dto/user-request.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateUserDto, UserResponseDto, UserRequestDto } from './dto';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -25,6 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
+import { UsersService } from './users.service';
 
 @ApiTags('users')
 @ApiBearerAuth()
