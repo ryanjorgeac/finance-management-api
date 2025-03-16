@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import * as bcrypt from 'bcrypt';
+import * as argon from 'argon2';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -10,9 +14,7 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const alreadyCreated = await this.prisma.user.findFirst({
-      where: { email: createUserDto.email },
-    });
+    const alreadyCreated = await this.findByEmail(createUserDto.email);
     if (alreadyCreated) {
       throw new Error('User with this E-mail already exists');
     }
@@ -23,14 +25,12 @@ export class UsersService {
         password: hashedPw,
       },
     });
-    const user = new User(prismaUser);
-    return user;
+    return new User(prismaUser);
   }
 
   async findAll(): Promise<User[]> {
     const prismaUsers = await this.prisma.user.findMany();
-    const users = prismaUsers.map((prismaUser) => new User(prismaUser));
-    return users;
+    return prismaUsers.map((prismaUser) => new User(prismaUser));
   }
 
   async findOne(id: string): Promise<User> {
@@ -41,7 +41,6 @@ export class UsersService {
     if (!prismaUser) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-
     return new User(prismaUser);
   }
 
@@ -49,16 +48,18 @@ export class UsersService {
     const prismaUser = await this.prisma.user.findUnique({
       where: { email },
     });
-
-    if (!prismaUser) {
-      return null;
-    }
-
-    return new User(prismaUser);
+    return prismaUser ? new User(prismaUser) : null;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     await this.findOne(id);
+
+    if (updateUserDto.email) {
+      const emailOwner = await this.checkEmailOwner(updateUserDto.email, id);
+      if (!emailOwner) {
+        throw new ConflictException('User with this email already exists');
+      }
+    }
 
     if (updateUserDto.password) {
       updateUserDto.password = await this.hashPassword(updateUserDto.password);
@@ -81,7 +82,25 @@ export class UsersService {
   }
 
   private async hashPassword(password: string): Promise<string> {
-    const salt = await bcrypt.genSalt();
-    return bcrypt.hash(password, salt);
+    const hash = await argon.hash(password);
+    return hash;
+  }
+
+  private async checkEmailOwner(
+    email: string,
+    userId: string,
+  ): Promise<boolean> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        email,
+        id: { not: userId },
+      },
+    });
+    return !!user;
+  }
+
+  async comparePassword(user: User, password: string): Promise<boolean> {
+    const userPw = user.password;
+    return argon.verify(userPw, password);
   }
 }
