@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
@@ -25,17 +21,23 @@ export class AuthService {
     password: string,
   ): Promise<Omit<UserResponseDto, 'password'> | null> {
     const user = await this.usersService.findByEmail(email);
-    if (user && user.password === password) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password, ...result } = user;
-      return result;
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
     }
-    return null;
+
+    const isPasswordValid = await this.usersService.comparePassword(
+      user,
+      password,
+    );
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    return user;
   }
 
   async login(loginDto: LoginDto): Promise<{
-    accessToken: string;
-    refreshToken: string;
+    access_token: string;
+    refresh_token: string;
     user: Partial<User>;
   }> {
     const user = await this.validateUser(loginDto.email, loginDto.password);
@@ -46,23 +48,23 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto): Promise<{
-    accessToken: string;
-    refreshToken: string;
+    access_token: string;
+    refresh_token: string;
     user: Partial<User>;
   }> {
-     const existingUser = await this.usersService.findByEmail(registerDto.email);
-    if (existingUser) {
-      throw new BadRequestException('User cannot be created with this email');
+    try {
+      const user = await this.usersService.create(registerDto);
+      return this.generateTokens(user);
+    } catch (error) {
+      throw new UnauthorizedException(
+        'Cannot create a user with provided e-mail',
+      );
     }
-    const user = await this.usersService.create(registerDto);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...result } = user;
-    return this.generateTokens(result);
   }
 
   async refreshToken(refreshToken: string): Promise<{
-    accessToken: string;
-    refreshToken: string;
+    access_token: string;
+    refresh_token: string;
     user: Partial<User>;
   }> {
     try {
@@ -107,18 +109,18 @@ export class AuthService {
   }
 
   private generateTokens(user: Partial<User>): {
-    accessToken: string;
-    refreshToken: string;
+    access_token: string;
+    refresh_token: string;
     user: Partial<User>;
   } {
     const payload = { sub: user.id, email: user.email, role: user.role };
 
     return {
-      accessToken: this.jwtService.sign(payload, {
+      access_token: this.jwtService.sign(payload, {
         secret: this.configService.get('JWT_SECRET'),
         expiresIn: this.configService.get('JWT_EXPIRATION') || '1h',
       }),
-      refreshToken: this.jwtService.sign(payload, {
+      refresh_token: this.jwtService.sign(payload, {
         secret: this.configService.get('JWT_SECRET'),
         expiresIn: '7d',
       }),
