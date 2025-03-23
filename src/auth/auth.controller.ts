@@ -32,6 +32,7 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiBody({ type: LoginDto })
+  @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto): Promise<object> {
     const authResult = await this.authService.login(loginDto);
     return authResult;
@@ -45,7 +46,7 @@ export class AuthController {
     type: AuthResponseDto,
   })
   @ApiResponse({
-    status: 400,
+    status: 401,
     description: 'Bad request - validation error or user already exists',
   })
   @ApiBody({ type: RegisterDto })

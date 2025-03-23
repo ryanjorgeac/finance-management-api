@@ -103,7 +103,7 @@ export class AuthService {
       await this.usersService.update(user.id, { password });
 
       return { message: 'Password has been reset successfully' };
-    } catch (error) {
+    } catch (_error) {
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
