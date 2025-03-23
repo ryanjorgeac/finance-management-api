@@ -20,9 +20,10 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { Roles } from 'src/auth/decorators/roles.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { GetUser, Roles } from '../auth/decorators/';
 import { UsersService } from './users.service';
+import { User } from '@prisma/client';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -33,23 +34,20 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('profile')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
     status: 200,
     description: 'User profile retrieved successfully',
     type: UserResponseDto,
   })
-  async getProfile(@Request() req: UserRequestDto): Promise<UserResponseDto> {
-    const userId = req.id;
-    const user = await this.usersService.findOne(userId);
-    return new UserResponseDto(user);
+  getProfile(@GetUser() user: User): Promise<User> {
+    return Promise.resolve(user);
   }
 
   @Patch('profile')
   @ApiOperation({ summary: 'Update current user profile' })
   @ApiResponse({
-    status: 200,
+    status: 201,
     description: 'User profile updated successfully',
     type: UserResponseDto,
   })
