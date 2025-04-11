@@ -23,7 +23,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser, Roles } from '../auth/decorators/';
 import { UsersService } from './users.service';
-import { User } from '@prisma/client';
+import { User } from '../users/entities/user.entity';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -40,8 +40,10 @@ export class UsersController {
     description: 'User profile retrieved successfully',
     type: UserResponseDto,
   })
-  getProfile(@GetUser() user: User): Promise<User> {
-    return Promise.resolve(user);
+  async getProfile(@GetUser() user: { sub: string }): Promise<User | null> {
+    console.log(user);
+    const foundUser = await this.usersService.findOne(user.sub);
+    return foundUser;
   }
 
   @Patch('profile')
@@ -55,26 +57,27 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiBody({ type: UpdateUserDto })
   async updateProfile(
-    @Request() req: UserRequestDto,
+    @GetUser() user: { sub: string },
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
-    const user = await this.usersService.update(req.id, updateUserDto);
-    return new UserResponseDto(user);
+    console.log(user);
+    const updatedUser = await this.usersService.update(user.sub, updateUserDto);
+    return new UserResponseDto(updatedUser);
   }
 
   @Delete('profile')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete current user account' })
   @ApiResponse({
-    status: 204,
+    status: 200,
     description: 'User account deleted successfully',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteProfile(
-    @Request() req: UserRequestDto,
+    @GetUser() user: { sub: string },
   ): Promise<UserResponseDto> {
-    const user = await this.usersService.remove(req.id);
-    return new UserResponseDto(user);
+    const removedUser = await this.usersService.remove(user.sub);
+    return new UserResponseDto(removedUser);
   }
 
   @Get()
