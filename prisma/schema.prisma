@@ -41,7 +41,7 @@ model Category {
 model Transaction {
   id            String   @id @default(uuid())
   amount        Decimal  @db.Decimal(10, 2)
-  type          Type
+  type          TransactionType
   description   String
   date          DateTime
   userId        String
@@ -54,7 +54,7 @@ model Transaction {
   @@map("transactions")
 }
 
-enum Type {
+enum TransactionType {
   INCOME
   EXPENSE
 }
