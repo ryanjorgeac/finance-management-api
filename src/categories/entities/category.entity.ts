@@ -2,19 +2,21 @@ import { User } from '../../users/entities/user.entity';
 import { Transaction } from '../../transactions/entities/transaction.entity';
 import { Decimal } from '@prisma/client/runtime/library';
 
+enum TransactionTypes {
+  INCOME = 'INCOME',
+  EXPENSE = 'EXPENSE',
+}
+
 export class Category {
   id: string;
   name: string;
-  description?: string;
-  parentId?: string;
-  parent?: Category;
-  children?: Category[];
-  color?: string;
-  icon?: string;
-  budgetAmount?: Decimal;
+  description: string | null;
+  color: string | null;
+  icon: string | null;
+  budgetAmount: Decimal;
   userId: string;
-  user?: User;
-  transactions?: Transaction[];
+  user: User;
+  transactions: Transaction[];
   createdAt: Date;
   updatedAt: Date;
 
@@ -29,7 +31,7 @@ export class Category {
 
     return this.transactions
       .filter((transaction) => {
-        if (transaction.type !== 'debit') return false;
+        if (transaction.type !== TransactionTypes.EXPENSE) return false;
 
         if (startDate && transaction.date < startDate) return false;
         if (endDate && transaction.date > endDate) return false;

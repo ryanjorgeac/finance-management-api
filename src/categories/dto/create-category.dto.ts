@@ -2,8 +2,8 @@ import {
   IsNotEmpty,
   IsString,
   IsOptional,
-  IsUUID,
   IsNumber,
+  MaxLength,
 } from 'class-validator';
 
 export class CreateCategoryDto {
@@ -13,11 +13,8 @@ export class CreateCategoryDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(48)
   description?: string;
-
-  @IsOptional()
-  @IsUUID()
-  parentId?: string;
 
   @IsOptional()
   @IsString()
@@ -27,7 +24,6 @@ export class CreateCategoryDto {
   @IsString()
   icon?: string;
 
-  @IsOptional()
   @IsNumber()
-  budgetAmount?: number;
+  budgetAmount: number;
 }

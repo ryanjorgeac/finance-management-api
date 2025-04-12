@@ -1,12 +1,5 @@
-import { Expose, Type } from 'class-transformer';
-
-class CategoryBasicDto {
-  @Expose()
-  id: string;
-
-  @Expose()
-  name: string;
-}
+import { Decimal } from '@prisma/client/runtime/library';
+import { Expose } from 'class-transformer';
 
 export class CategoryResponseDto {
   @Expose()
@@ -16,23 +9,16 @@ export class CategoryResponseDto {
   name: string;
 
   @Expose()
-  description: string;
+  description: string | null;
 
   @Expose()
-  parentId: string;
+  color: string | null;
 
   @Expose()
-  @Type(() => CategoryBasicDto)
-  parent?: CategoryBasicDto;
+  icon: string | null;
 
   @Expose()
-  color: string;
-
-  @Expose()
-  icon: string;
-
-  @Expose()
-  budgetAmount: number;
+  budgetAmount: Decimal;
 
   @Expose()
   userId: string;
