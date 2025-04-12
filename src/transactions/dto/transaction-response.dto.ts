@@ -1,5 +1,4 @@
 import { Expose, Type } from 'class-transformer';
-import { AccountResponseDto } from '../../accounts/dto/account-response.dto';
 import { CategoryResponseDto } from '../../categories/dto/category-response.dto';
 
 export class TransactionResponseDto {
@@ -26,13 +25,6 @@ export class TransactionResponseDto {
 
   @Expose()
   userId: string;
-
-  @Expose()
-  accountId: string;
-
-  @Expose()
-  @Type(() => AccountResponseDto)
-  account?: AccountResponseDto;
 
   @Expose()
   categoryId: string;

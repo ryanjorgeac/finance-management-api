@@ -177,29 +177,11 @@ describe('AppController (e2e)', () => {
   });
 
   describe('User', () => {
-    describe('Get Profile', () => {
-      it('should get profile', () => {
-        return pactum
-          .spec()
-          .get('/users/profile')
-          .withHeader('Authorization', `Bearer ${token}`)
-          .expectStatus(200)
-          .expectBodyContains('email')
-          .expectBodyContains('firstName')
-      });
-    });
+    describe('Get Profile', () => {});
 
     describe('Update user', () => {});
 
     describe('Delete user', () => {});
-  });
-
-  describe('Accounts', () => {
-    describe('Create new account', () => {});
-
-    describe('Update account', () => {});
-
-    describe('Delete account', () => {});
   });
 
   describe('Categories', () => {

@@ -38,9 +38,5 @@ export class CreateTransactionDto {
 
   @IsNotEmpty()
   @IsUUID()
-  accountId: string;
-
-  @IsNotEmpty()
-  @IsUUID()
   categoryId: string;
 }

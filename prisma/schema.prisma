@@ -13,8 +13,7 @@ model User {
   password     String
   firstName    String
   lastName     String
-  role         String        @default("user")
-  accounts     Account[]
+  role         Role        @default(USER)
   transactions Transaction[]
   categories   Category[]
   createdAt    DateTime      @default(now())
@@ -23,27 +22,10 @@ model User {
   @@map("users")
 }
 
-model Account {
-  id           String        @id @default(uuid())
-  name         String
-  type         String
-  balance      Decimal       @default(0) @db.Decimal(10, 2)
-  userId       String
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions Transaction[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-
-  @@map("accounts")
-}
-
 model Category {
   id           String        @id @default(uuid())
   name         String
   description  String?
-  parentId     String?
-  parent       Category?     @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children     Category[]    @relation("CategoryHierarchy")
   color        String?
   icon         String?
   budgetAmount Decimal?      @db.Decimal(10, 2)
@@ -59,19 +41,25 @@ model Category {
 model Transaction {
   id            String   @id @default(uuid())
   amount        Decimal  @db.Decimal(10, 2)
-  type          String
+  type          Type
   description   String
   date          DateTime
-  paymentMethod String?
-  attachment    String?
   userId        String
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accountId     String
-  account       Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
   categoryId    String
   category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   @@map("transactions")
+}
+
+enum Type {
+  INCOME
+  EXPENSE
+}
+
+enum Role {
+  USER
+  ADMIN
 }

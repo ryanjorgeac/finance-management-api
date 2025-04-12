@@ -4,7 +4,6 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { CategoriesModule } from './categories/categories.module';
-// import { AccountsModule } from './accounts/accounts.module';
 import { ReportsModule } from './reports/reports.module';
 import { PrismaModule } from './database/prisma.module';
 
@@ -17,7 +16,6 @@ import { PrismaModule } from './database/prisma.module';
     AuthModule,
     TransactionsModule,
     CategoriesModule,
-    // AccountsModule,
     ReportsModule,
     PrismaModule,
   ],

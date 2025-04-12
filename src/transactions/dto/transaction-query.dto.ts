@@ -15,10 +15,6 @@ export enum TransactionType {
 export class TransactionQueryDto {
   @IsOptional()
   @IsUUID()
-  accountId?: string;
-
-  @IsOptional()
-  @IsUUID()
   categoryId?: string;
 
   @IsOptional()

@@ -32,7 +32,6 @@ export class PrismaService
   cleanDb() {
     return this.$transaction([
       this.user.deleteMany(),
-      this.account.deleteMany(),
       this.category.deleteMany(),
       this.transaction.deleteMany(),
     ]);

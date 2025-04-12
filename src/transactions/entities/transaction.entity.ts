@@ -1,5 +1,4 @@
 import { User } from '../../users/entities/user.entity';
-import { Account } from '../../accounts/entities/account.entity';
 import { Category } from '../../categories/entities/category.entity';
 import { Decimal } from '@prisma/client/runtime/library';
 
@@ -13,8 +12,6 @@ export class Transaction {
   attachment?: string;
   userId: string;
   user?: User;
-  accountId: string;
-  account?: Account;
   categoryId: string;
   category?: Category;
   createdAt: Date;
