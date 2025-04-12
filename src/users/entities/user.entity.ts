@@ -1,6 +1,7 @@
 import { Category } from '../../categories/entities/category.entity';
 import { Transaction } from '../../transactions/entities/transaction.entity';
 import { Exclude } from 'class-transformer';
+import { UserRole } from '@prisma/client';
 
 export class User {
   id: string;
@@ -11,7 +12,7 @@ export class User {
 
   firstName: string;
   lastName: string;
-  role: string;
+  role: UserRole;
   transactions?: Transaction[];
   categories?: Category[];
   createdAt: Date;

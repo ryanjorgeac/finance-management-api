@@ -1,11 +1,12 @@
 import { User } from '../../users/entities/user.entity';
 import { Category } from '../../categories/entities/category.entity';
 import { Decimal } from '@prisma/client/runtime/library';
+import { TransactionType } from '@prisma/client';
 
 export class Transaction {
   id: string;
   amount: Decimal;
-  type: string;
+  type: TransactionType;
   description: string;
   date: Date;
   paymentMethod?: string;

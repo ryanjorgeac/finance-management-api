@@ -13,7 +13,7 @@ model User {
   password     String
   firstName    String
   lastName     String
-  role         Role        @default(USER)
+  role         UserRole        @default(USER)
   transactions Transaction[]
   categories   Category[]
   createdAt    DateTime      @default(now())
@@ -59,7 +59,7 @@ enum Type {
   EXPENSE
 }
 
-enum Role {
+enum UserRole {
   USER
   ADMIN
 }
