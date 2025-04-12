@@ -1,4 +1,3 @@
-import { Account } from '../../accounts/entities/account.entity';
 import { Category } from '../../categories/entities/category.entity';
 import { Transaction } from '../../transactions/entities/transaction.entity';
 import { Exclude } from 'class-transformer';
@@ -13,7 +12,6 @@ export class User {
   firstName: string;
   lastName: string;
   role: string;
-  accounts?: Account[];
   transactions?: Transaction[];
   categories?: Category[];
   createdAt: Date;

@@ -57,7 +57,7 @@ export class UsersService {
     if (updateUserDto.email) {
       const emailOwner = await this.checkEmailOwner(updateUserDto.email, id);
       if (!emailOwner) {
-        throw new ConflictException('User with this email already exists');
+        throw new ConflictException('This email cannot be used');
       }
     }
 

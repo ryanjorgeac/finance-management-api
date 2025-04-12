@@ -8,11 +8,10 @@ import {
   HttpStatus,
   Param,
   Patch,
-  Request,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { UpdateUserDto, UserResponseDto, UserRequestDto } from './dto';
+import { UpdateUserDto, UserResponseDto } from './dto';
 import {
   ApiBearerAuth,
   ApiBody,
