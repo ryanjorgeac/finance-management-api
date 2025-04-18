@@ -74,16 +74,6 @@ export class AuthController {
     return authResult;
   }
 
-  //   @Post('forgot-password')
-  //   @HttpCode(HttpStatus.OK)
-  //   @ApiOperation({ summary: 'Request password reset' })
-  //   @ApiResponse({ status: 200, description: 'Password reset token generated' })
-  //   @ApiResponse({ status: 400, description: 'Email not found' })
-  //   @ApiBody({ type: ForgotPasswordDto })
-  //   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-  //     return await this.authService.forgotPassword(forgotPasswordDto);
-  //   }
-
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reset password using token' })

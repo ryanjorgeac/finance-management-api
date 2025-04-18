@@ -19,7 +19,7 @@ export class AuthService {
   async validateUser(
     email: string,
     password: string,
-  ): Promise<Omit<UserResponseDto, 'password'> | null> {
+  ): Promise<Omit<UserResponseDto, 'password'>> {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -41,9 +41,6 @@ export class AuthService {
     user: Partial<User>;
   }> {
     const user = await this.validateUser(loginDto.email, loginDto.password);
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
     return this.generateTokens(user);
   }
 
@@ -55,7 +52,7 @@ export class AuthService {
     try {
       const user = await this.usersService.create(registerDto);
       return this.generateTokens(user);
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException(
         'Cannot create a user with provided e-mail',
       );
@@ -73,17 +70,10 @@ export class AuthService {
       });
 
       const user = await this.usersService.findOne(payload.sub);
-      const { password, ...result } = user;
-
-      return this.generateTokens(result);
-    } catch (error) {
+      return this.generateTokens(user);
+    } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
-  }
-
-  forgotPassword() {
-    // TODO: Implement this method
-    return;
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<object> {
@@ -103,7 +93,7 @@ export class AuthService {
       await this.usersService.update(user.id, { password });
 
       return { message: 'Password has been reset successfully' };
-    } catch (_error) {
+    } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
