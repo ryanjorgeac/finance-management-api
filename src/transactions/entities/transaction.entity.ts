@@ -3,23 +3,16 @@ import { Category } from '../../categories/entities/category.entity';
 import { Decimal } from '@prisma/client/runtime/library';
 import { TransactionType } from '@prisma/client';
 
-enum TransactionTypes {
-  INCOME = 'INCOME',
-  EXPENSE = 'EXPENSE',
-}
-
 export class Transaction {
   id: string;
   amount: Decimal;
   type: TransactionType;
   description: string;
   date: Date;
-  paymentMethod?: string;
-  attachment?: string;
   userId: string;
-  user?: User;
+  user: User;
   categoryId: string;
-  category?: Category;
+  category: Category;
   createdAt: Date;
   updatedAt: Date;
 
@@ -28,17 +21,17 @@ export class Transaction {
   }
 
   getBalanceImpact(): Decimal {
-    return this.type === TransactionTypes.INCOME
+    return this.type === TransactionType.INCOME
       ? this.amount
       : Decimal.mul(this.amount, -1);
   }
 
   isExpense(): boolean {
-    return this.type === TransactionTypes.EXPENSE;
+    return this.type === TransactionType.EXPENSE;
   }
 
   isIncome(): boolean {
-    return this.type === TransactionTypes.INCOME;
+    return this.type === TransactionType.INCOME;
   }
 
   formatAmount(currencySymbol = '$'): string {

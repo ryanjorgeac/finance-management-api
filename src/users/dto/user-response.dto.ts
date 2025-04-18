@@ -1,3 +1,4 @@
+import { UserRole } from '@prisma/client';
 import { Exclude, Expose } from 'class-transformer';
 
 export class UserResponseDto {
@@ -14,7 +15,7 @@ export class UserResponseDto {
   lastName: string;
 
   @Expose()
-  role: string;
+  role: UserRole;
 
   @Exclude()
   password: string;

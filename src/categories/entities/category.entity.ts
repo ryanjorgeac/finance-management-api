@@ -13,10 +13,11 @@ export class Category {
   description: string | null;
   color: string | null;
   icon: string | null;
-  budgetAmount: Decimal;
+  budgetAmount: Decimal | null;
   userId: string;
   user: User;
   transactions: Transaction[];
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 

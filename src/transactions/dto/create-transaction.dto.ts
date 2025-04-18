@@ -1,40 +1,29 @@
 import {
   IsNotEmpty,
   IsString,
-  IsNumber,
   IsUUID,
-  IsIn,
-  IsOptional,
   IsDate,
+  IsDecimal,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Decimal } from '@prisma/client/runtime/library';
+import { TransactionType } from '@prisma/client';
 
 export class CreateTransactionDto {
   @IsNotEmpty()
-  @IsNumber()
-  amount: number;
+  @IsDecimal()
+  amount: Decimal;
 
   @IsNotEmpty()
   @IsString()
-  @IsIn(['debit', 'credit'])
-  type: string;
+  type: TransactionType;
 
   @IsNotEmpty()
   @IsString()
   description: string;
 
   @IsNotEmpty()
-  @Type(() => Date)
   @IsDate()
   date: Date;
-
-  @IsOptional()
-  @IsString()
-  paymentMethod?: string;
-
-  @IsOptional()
-  @IsString()
-  attachment?: string;
 
   @IsNotEmpty()
   @IsUUID()

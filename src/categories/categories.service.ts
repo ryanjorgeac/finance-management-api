@@ -86,11 +86,13 @@ export class CategoriesService {
       if (!defaultCategory) {
         defaultCategory = await this.prisma.category.create({
           data: {
-            name: 'Deleted category',
+            name: 'Uncategorized',
             description:
               'Default category for transactions from deleted categories',
             color: '#999999',
             userId,
+            budgetAmount: 0,
+            isActive: false,
           },
         });
       }

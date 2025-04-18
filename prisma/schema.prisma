@@ -28,10 +28,11 @@ model Category {
   description  String?
   color        String?
   icon         String?
-  budgetAmount Decimal      @db.Decimal(10, 2)
+  budgetAmount Decimal?      @default(0) @db.Decimal(10, 2)
   userId       String
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
+  isActive     Boolean       @default(true)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 

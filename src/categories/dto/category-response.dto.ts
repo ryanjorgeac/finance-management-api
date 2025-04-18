@@ -18,10 +18,13 @@ export class CategoryResponseDto {
   icon: string | null;
 
   @Expose()
-  budgetAmount: Decimal;
+  budgetAmount: Decimal | null;
 
   @Expose()
   userId: string;
+
+  @Expose()
+  isActive: boolean;
 
   @Expose()
   createdAt: Date;

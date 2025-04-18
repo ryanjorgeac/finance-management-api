@@ -26,4 +26,7 @@ export class CreateCategoryDto {
 
   @IsNumber()
   budgetAmount: number;
+
+  @IsOptional()
+  isActive?: boolean;
 }

@@ -1,12 +1,13 @@
 import { Expose, Type } from 'class-transformer';
 import { CategoryResponseDto } from '../../categories/dto/category-response.dto';
+import { Decimal } from '@prisma/client/runtime/library';
 
 export class TransactionResponseDto {
   @Expose()
   id: string;
 
   @Expose()
-  amount: number;
+  amount: Decimal;
 
   @Expose()
   type: string;
