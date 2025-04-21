@@ -1,13 +1,22 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  HttpException,
+  Injectable,
+  UnauthorizedException,
+  UseFilters,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { UserResponseDto } from 'src/users/dto/user-response.dto';
-import { User } from 'src/users/entities/user.entity';
 import { RegisterDto } from './dto/register.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { AuthResponseDto, AuthUserDto } from './dto';
+import { HttpExceptionFilter } from 'src/exceptions/http-exception.filter';
 
+@UseFilters(HttpExceptionFilter)
 @Injectable()
 export class AuthService {
   constructor(
@@ -32,38 +41,32 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    return user;
+    const { password: _, ...userWithoutPassword } = user;
+    return new UserResponseDto(userWithoutPassword);
   }
 
-  async login(loginDto: LoginDto): Promise<{
-    access_token: string;
-    refresh_token: string;
-    user: Partial<User>;
-  }> {
+  async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const user = await this.validateUser(loginDto.email, loginDto.password);
     return this.generateTokens(user);
   }
 
-  async register(registerDto: RegisterDto): Promise<{
-    access_token: string;
-    refresh_token: string;
-    user: Partial<User>;
-  }> {
+  async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     try {
       const user = await this.usersService.create(registerDto);
       return this.generateTokens(user);
-    } catch {
-      throw new UnauthorizedException(
-        'Cannot create a user with provided e-mail',
+    } catch (error) {
+      console.error('Error during registration:', error);
+      if (error instanceof ConflictException) {
+        throw error;
+      }
+      throw new HttpException(
+        'An unexpected error occurred during registration',
+        500,
       );
     }
   }
 
-  async refreshToken(refreshToken: string): Promise<{
-    access_token: string;
-    refresh_token: string;
-    user: Partial<User>;
-  }> {
+  async refreshToken(refreshToken: string): Promise<AuthResponseDto> {
     try {
       const payload: { sub: string } = this.jwtService.verify(refreshToken, {
         secret: this.configService.get('JWT_SECRET'),
@@ -76,7 +79,9 @@ export class AuthService {
     }
   }
 
-  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<object> {
+  async resetPassword(
+    resetPasswordDto: ResetPasswordDto,
+  ): Promise<AuthResponseDto> {
     try {
       const payload: { sub: string } = this.jwtService.verify(
         resetPasswordDto.token,
@@ -92,35 +97,37 @@ export class AuthService {
       const password = resetPasswordDto.newPassword;
       await this.usersService.update(user.id, { password });
 
-      return { message: 'Password has been reset successfully' };
+      return this.generateTokens(user);
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
 
-  private generateTokens(user: Partial<User>): {
-    access_token: string;
-    refresh_token: string;
-    user: Partial<User>;
-  } {
-    const payload = { sub: user.id, email: user.email, role: user.role };
+  // TODO
+  // async forgotPassword()
 
-    return {
-      access_token: this.jwtService.sign(payload, {
-        secret: this.configService.get('JWT_SECRET'),
-        expiresIn: this.configService.get('JWT_EXPIRATION') || '1h',
-      }),
-      refresh_token: this.jwtService.sign(payload, {
-        secret: this.configService.get('JWT_SECRET'),
-        expiresIn: '7d',
-      }),
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-      },
+  private generateTokens(user: UserResponseDto): AuthResponseDto {
+    const payload = { sub: user.id, email: user.email, role: user.role };
+    const userInfo = {
+      ...(user.id && { id: user.id }),
+      ...(user.email && { email: user.email }),
+      ...(user.firstName && { firstName: user.firstName }),
+      ...(user.lastName && { lastName: user.lastName }),
+      ...(user.role && { role: user.role }),
     };
+    const authUser = new AuthUserDto(userInfo);
+    const accessToken = this.jwtService.sign(payload, {
+      secret: this.configService.get('JWT_SECRET'),
+      expiresIn: this.configService.get('JWT_EXPIRATION') || '1h',
+    });
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: this.configService.get('JWT_SECRET'),
+      expiresIn: '7d',
+    });
+    return new AuthResponseDto({
+      accessToken,
+      refreshToken,
+      user: authUser,
+    });
   }
 }
