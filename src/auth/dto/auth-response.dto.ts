@@ -1,21 +1,43 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { UserRole } from '@prisma/client';
 import { Expose } from 'class-transformer';
 
 export class AuthUserDto {
+  @ApiProperty({
+    description: 'User ID',
+    example: '123456',
+  })
   @Expose()
   id: string;
 
+  @ApiProperty({
+    description: 'User email',
+    example: 'test@test.com',
+  })
   @Expose()
   email: string;
 
+  @ApiProperty({
+    description: 'User first name',
+    example: 'Ryan',
+  })
   @Expose()
   firstName: string;
 
+  @ApiProperty({
+    description: 'User last name',
+    example: 'Carvalho',
+  })
   @Expose()
   lastName: string;
 
+  @ApiProperty({
+    description: 'User role',
+    example: 'USER',
+    enum: UserRole,
+  })
   @Expose()
-  role: string;
+  role: UserRole;
 
   constructor(partial: Partial<AuthUserDto>) {
     Object.assign(this, partial);

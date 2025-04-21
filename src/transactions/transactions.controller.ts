@@ -11,7 +11,6 @@ import {
   ClassSerializerInterceptor,
   HttpCode,
   HttpStatus,
-  NotFoundException,
   ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
@@ -28,6 +27,8 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiBody,
+  ApiQuery,
+  ApiExtraModels,
 } from '@nestjs/swagger';
 import { GetUser } from 'src/auth/decorators';
 import { ExceptionResponseDto } from 'src/exceptions/exception-response.dto';
@@ -88,6 +89,10 @@ export class TransactionsController {
     status: 403,
     description: 'Unauthorized',
     type: ExceptionResponseDto,
+  })
+  @ApiExtraModels(TransactionQueryDto)
+  @ApiQuery({
+    type: TransactionQueryDto,
   })
   async findAll(
     @GetUser() user: { sub: string },

@@ -26,9 +26,9 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiBody,
-  ApiQuery,
 } from '@nestjs/swagger';
 import { GetUser } from 'src/auth/decorators';
+import { ExceptionResponseDto } from 'src/exceptions/exception-response.dto';
 
 @ApiTags('Categories')
 @ApiBearerAuth()
@@ -45,8 +45,16 @@ export class CategoriesController {
     description: 'Category created successfully',
     type: CategoryResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Bad request - validation error' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - validation error',
+    type: ExceptionResponseDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Unauthorized',
+    type: ExceptionResponseDto,
+  })
   @ApiBody({ type: CreateCategoryDto })
   async create(
     @GetUser() user: { sub: string },
@@ -67,11 +75,6 @@ export class CategoriesController {
     type: [CategoryResponseDto],
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiQuery({
-    name: 'parentId',
-    required: false,
-    description: 'Filter by parent category ID',
-  })
   async findAll(
     @GetUser() user: { sub: string },
   ): Promise<CategoryResponseDto[]> {
@@ -92,8 +95,16 @@ export class CategoriesController {
     description: 'Category retrieved successfully',
     type: CategoryResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Category not found' })
+  @ApiResponse({
+    status: 403,
+    description: 'Unauthorized',
+    type: ExceptionResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Category not found',
+    type: ExceptionResponseDto,
+  })
   async findOne(
     @GetUser() user: { sub: string },
     @Param('id', ParseUUIDPipe) id: string,
@@ -118,9 +129,21 @@ export class CategoriesController {
     description: 'Category updated successfully',
     type: CategoryResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Bad request - validation error' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Category not found' })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - validation error',
+    type: ExceptionResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    type: ExceptionResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Category not found',
+    type: ExceptionResponseDto,
+  })
   @ApiBody({ type: UpdateCategoryDto })
   async update(
     @GetUser() user: { sub: string },
@@ -145,8 +168,16 @@ export class CategoriesController {
     format: 'uuid',
   })
   @ApiResponse({ status: 204, description: 'Category deleted successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Category not found' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    type: ExceptionResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Category not found',
+    type: ExceptionResponseDto,
+  })
   async remove(
     @GetUser() user: { sub: string },
     @Param('id', ParseUUIDPipe) id: string,

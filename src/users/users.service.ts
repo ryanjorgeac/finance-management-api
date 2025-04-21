@@ -1,7 +1,9 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import * as argon from 'argon2';
@@ -12,6 +14,8 @@ import { User } from './entities/user.entity';
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
+
+  private readonly logger = new Logger(UsersService.name);
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const alreadyCreated = await this.findByEmail(createUserDto.email);
@@ -57,7 +61,7 @@ export class UsersService {
     if (updateUserDto.email) {
       const emailOwner = await this.checkEmailOwner(updateUserDto.email, id);
       if (!emailOwner) {
-        throw new ConflictException('This email cannot be used');
+        throw new UnauthorizedException('This email cannot be used');
       }
     }
 
@@ -74,11 +78,16 @@ export class UsersService {
   }
 
   async remove(id: string): Promise<User> {
-    const toDeleteUser = await this.findOne(id);
-    await this.prisma.user.delete({
-      where: { id },
-    });
-    return new User(toDeleteUser);
+    try {
+      const toDeleteUser = await this.findOne(id);
+      await this.prisma.user.delete({
+        where: { id },
+      });
+      return new User(toDeleteUser);
+    } catch (error) {
+      this.logger.error(`Error removing user: ${error}`);
+      throw error;
+    }
   }
 
   private async hashPassword(password: string): Promise<string> {

@@ -23,6 +23,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser, Roles } from '../auth/decorators/';
 import { UsersService } from './users.service';
 import { User } from '../users/entities/user.entity';
+import { ExceptionResponseDto } from 'src/exceptions/exception-response.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -52,8 +53,16 @@ export class UsersController {
     description: 'User profile updated successfully',
     type: UserResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Bad request - validation error' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 404,
+    description: 'Bad request - user not found',
+    type: ExceptionResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    type: ExceptionResponseDto,
+  })
   @ApiBody({ type: UpdateUserDto })
   async updateProfile(
     @GetUser() user: { sub: string },
@@ -70,8 +79,13 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'User account deleted successfully',
+    type: UserResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+    type: ExceptionResponseDto,
+  })
   async deleteProfile(
     @GetUser() user: { sub: string },
   ): Promise<UserResponseDto> {
