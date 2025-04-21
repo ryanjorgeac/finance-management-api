@@ -16,8 +16,9 @@ import {
   ResetPasswordDto,
 } from './dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ExceptionResponseDto } from 'src/exceptions/exception-response.dto';
 
-@ApiTags('auth')
+@ApiTags('Auth')
 @Controller('auth')
 @UseInterceptors(ClassSerializerInterceptor)
 export class AuthController {
@@ -30,12 +31,15 @@ export class AuthController {
     description: 'Login successful',
     type: AuthResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid credentials',
+    type: ExceptionResponseDto,
+  })
   @ApiBody({ type: LoginDto })
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginDto: LoginDto): Promise<object> {
-    const authResult = await this.authService.login(loginDto);
-    return authResult;
+  async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
+    return await this.authService.login(loginDto);
   }
 
   @Post('register')
@@ -46,11 +50,25 @@ export class AuthController {
     type: AuthResponseDto,
   })
   @ApiResponse({
-    status: 401,
-    description: 'Bad request - validation error or user already exists',
+    status: 400,
+    description: 'Bad request - validation error',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'User with this email could not be created',
+    type: ExceptionResponseDto,
+    schema: {
+      example: {
+        statusCode: 409,
+        timestamp: '2025-04-21T12:34:56.789Z',
+        path: '/api/v1/auth/register',
+        message: 'User cannot be created with this email',
+        descriptionOrOptions: 'User cannot be created with this email',
+      },
+    },
   })
   @ApiBody({ type: RegisterDto })
-  async register(@Body() registerDto: RegisterDto): Promise<object> {
+  async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
     const authResult = await this.authService.register(registerDto);
     return authResult;
   }
@@ -67,7 +85,7 @@ export class AuthController {
   @ApiBody({ type: RefreshTokenDto })
   async refreshToken(
     @Body() refreshTokenDto: RefreshTokenDto,
-  ): Promise<object> {
+  ): Promise<AuthResponseDto> {
     const authResult = await this.authService.refreshToken(
       refreshTokenDto.refreshToken,
     );

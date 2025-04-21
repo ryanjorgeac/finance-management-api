@@ -31,7 +31,7 @@ import {
 } from '@nestjs/swagger';
 import { GetUser } from 'src/auth/decorators';
 
-@ApiTags('transactions')
+@ApiTags('Transactions')
 @ApiBearerAuth()
 @Controller('api/v1/transactions')
 @UseGuards(JwtAuthGuard)

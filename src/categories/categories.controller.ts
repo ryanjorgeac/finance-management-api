@@ -30,7 +30,7 @@ import {
 } from '@nestjs/swagger';
 import { GetUser } from 'src/auth/decorators';
 
-@ApiTags('categories')
+@ApiTags('Categories')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
