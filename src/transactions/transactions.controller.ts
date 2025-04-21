@@ -30,10 +30,12 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { GetUser } from 'src/auth/decorators';
+import { ExceptionResponseDto } from 'src/exceptions/exception-response.dto';
+import { PaginatedTransactionsResponseDto } from './dto/paginated-transactions-response.dto';
 
 @ApiTags('Transactions')
 @ApiBearerAuth()
-@Controller('api/v1/transactions')
+@Controller('transactions')
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 export class TransactionsController {
@@ -46,8 +48,21 @@ export class TransactionsController {
     description: 'Transaction created successfully',
     type: TransactionResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Bad request - validation error' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - validation error',
+    type: ExceptionResponseDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Unauthorized',
+    type: ExceptionResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Category not found',
+    type: ExceptionResponseDto,
+  })
   @ApiBody({ type: CreateTransactionDto })
   async create(
     @GetUser() user: { sub: string },
@@ -67,21 +82,25 @@ export class TransactionsController {
   @ApiResponse({
     status: 200,
     description: 'Transactions retrieved successfully',
-    type: [TransactionResponseDto],
+    type: PaginatedTransactionsResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Unauthorized',
+    type: ExceptionResponseDto,
+  })
   async findAll(
     @GetUser() user: { sub: string },
     @Query() query: TransactionQueryDto,
-  ): Promise<{
-    transactions: TransactionResponseDto[];
-    total: number;
-    page: number;
-    limit: number;
-  }> {
+  ): Promise<PaginatedTransactionsResponseDto> {
     const { transactions, total, page, limit } =
       await this.transactionsService.findAll(user.sub, query);
-    return { transactions, total, page, limit };
+    return new PaginatedTransactionsResponseDto(
+      transactions,
+      total,
+      page,
+      limit,
+    );
   }
 
   @Get(':id')
@@ -97,16 +116,21 @@ export class TransactionsController {
     description: 'Transaction retrieved successfully',
     type: TransactionResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Transaction not found' })
+  @ApiResponse({
+    status: 403,
+    description: 'Unauthorized',
+    type: ExceptionResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Transaction not found',
+    type: ExceptionResponseDto,
+  })
   async findOne(
     @GetUser() user: { sub: string },
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<TransactionResponseDto> {
     const transaction = await this.transactionsService.findOne(id, user.sub);
-    if (!transaction) {
-      throw new NotFoundException(`Transaction with ID ${id} not found`);
-    }
     return new TransactionResponseDto(transaction);
   }
 
@@ -123,9 +147,21 @@ export class TransactionsController {
     description: 'Transaction updated successfully',
     type: TransactionResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Bad request - validation error' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Transaction not found' })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - validation error',
+    type: ExceptionResponseDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Unauthorized',
+    type: ExceptionResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Transaction not found',
+    type: ExceptionResponseDto,
+  })
   @ApiBody({ type: UpdateTransactionDto })
   async update(
     @GetUser() user: { sub: string },
@@ -150,8 +186,16 @@ export class TransactionsController {
     format: 'uuid',
   })
   @ApiResponse({ status: 204, description: 'Transaction deleted successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Transaction not found' })
+  @ApiResponse({
+    status: 403,
+    description: 'Unauthorized',
+    type: ExceptionResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Transaction not found',
+    type: ExceptionResponseDto,
+  })
   async remove(
     @GetUser() user: { sub: string },
     @Param('id', ParseUUIDPipe) id: string,

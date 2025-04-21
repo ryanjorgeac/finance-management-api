@@ -1,42 +1,77 @@
 import { Expose, Type } from 'class-transformer';
-import { CategoryResponseDto } from '../../categories/dto/category-response.dto';
 import { Decimal } from '@prisma/client/runtime/library';
+import { ApiProperty } from '@nestjs/swagger';
+import { TransactionType } from '@prisma/client';
 
 export class TransactionResponseDto {
+  @ApiProperty({
+    description: 'Unique identifier for the transaction',
+    example: '1234567890abcdef',
+  })
   @Expose()
   id: string;
 
+  @ApiProperty({
+    description: 'Amount of the transaction',
+    example: 100.5,
+  })
+  @Type(() => Decimal)
   @Expose()
   amount: Decimal;
 
+  @ApiProperty({
+    description: 'Type of the transaction (INCOME or EXPENSE)',
+    example: 'INCOME',
+  })
   @Expose()
-  type: string;
+  type: TransactionType;
 
+  @ApiProperty({
+    description: 'Description of the transaction',
+    example: 'Some description',
+  })
   @Expose()
   description: string;
 
+  @ApiProperty({
+    description: 'Date of the transaction',
+    example: '2025-04-21T12:00:00Z',
+    type: String,
+    format: 'date-time',
+  })
   @Expose()
   date: Date;
 
-  @Expose()
-  paymentMethod: string;
-
-  @Expose()
-  attachment: string;
-
+  @ApiProperty({
+    description: 'Unique identifier for the user who created the transaction',
+    example: '1234567890abcdef',
+  })
   @Expose()
   userId: string;
 
+  @ApiProperty({
+    description: 'Unique identifier for the category of the transaction',
+    example: '1234567890abcdef',
+  })
   @Expose()
   categoryId: string;
 
-  @Expose()
-  @Type(() => CategoryResponseDto)
-  category?: CategoryResponseDto;
-
+  @ApiProperty({
+    description: 'Indicates the date and time when the transaction was created',
+    example: '2025-04-21T12:00:00Z',
+    type: String,
+    format: 'date-time',
+  })
   @Expose()
   createdAt: Date;
 
+  @ApiProperty({
+    description:
+      'Indicates the date and time when the transaction was last updated',
+    example: '2025-04-21T12:00:00Z',
+    type: String,
+    format: 'date-time',
+  })
   @Expose()
   updatedAt: Date;
 
