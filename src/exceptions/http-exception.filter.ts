@@ -6,7 +6,8 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import { ExceptionResponseDto } from './exception-response.dto';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -17,19 +18,37 @@ export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
     const status = exception.getStatus();
 
     const isProduction =
       this.configService.get<string>('NODE_ENV') === 'production';
 
-    const exceptionJson = {
-      statusCode: status,
-      timestamp: new Date().toISOString(),
-      message: exception.message,
-      stacktrace: !isProduction ? exception.stack : undefined,
-    };
+    const exceptionResponse = exception.getResponse();
+    let message: string;
 
-    this.logger.error(`Exception: ${exception.message}, status: ${status}`);
-    response.status(status).json(exceptionJson);
+    if (typeof exceptionResponse === 'string') {
+      message = exceptionResponse;
+    } else if (typeof exceptionResponse === 'object') {
+      message =
+        (exceptionResponse as { message?: string }).message ||
+        exception.message;
+    } else {
+      message = exception.message;
+    }
+
+    const exceptionDto = new ExceptionResponseDto();
+    exceptionDto.statusCode = status;
+    exceptionDto.timestamp = new Date().toISOString();
+    exceptionDto.path = request.url;
+    exceptionDto.message = message;
+    exceptionDto.stacktrace = !isProduction ? exception.stack : undefined;
+
+    this.logger.error(
+      `HttpException: ${exception.message}, status: ${status}`,
+      !isProduction ? exception.stack : undefined,
+    );
+
+    response.status(status).json(exceptionDto);
   }
 }
