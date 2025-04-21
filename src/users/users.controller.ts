@@ -24,7 +24,7 @@ import { GetUser, Roles } from '../auth/decorators/';
 import { UsersService } from './users.service';
 import { User } from '../users/entities/user.entity';
 
-@ApiTags('users')
+@ApiTags('Users')
 @ApiBearerAuth()
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)

@@ -18,7 +18,7 @@ export class UserResponseDto {
   role: UserRole;
 
   @Exclude()
-  password: string;
+  password?: string;
 
   @Expose()
   createdAt: Date;

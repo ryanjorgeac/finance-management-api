@@ -16,7 +16,7 @@ export class UsersService {
   async create(createUserDto: CreateUserDto): Promise<User> {
     const alreadyCreated = await this.findByEmail(createUserDto.email);
     if (alreadyCreated) {
-      throw new Error('User with this E-mail already exists');
+      throw new ConflictException('User cannot be created with this email');
     }
     const hashedPw: string = await this.hashPassword(createUserDto.password);
     const prismaUser = await this.prisma.user.create({
