@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Decimal } from '@prisma/client/runtime/library';
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 
 export class CategoryResponseDto {
   @ApiProperty({
@@ -41,6 +41,11 @@ export class CategoryResponseDto {
   @ApiProperty({
     description: 'Budget amount for the category',
     example: 500.0,
+  })
+  @Transform(({ value }) => {
+    if (!value) return null;
+    // Convert Decimal object to number
+    return typeof value === 'object' && value.d ? Number(value.d[0]) : value;
   })
   @Expose()
   budgetAmount: Decimal | null;
