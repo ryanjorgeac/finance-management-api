@@ -11,8 +11,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTransactionDto {
   @ApiProperty({
-    description: 'Unique identifier for the transaction',
-    example: '1234567890abcdef',
+    description: 'Amout of the transaction',
+    example: '10.00',
   })
   @IsNotEmpty()
   @IsDecimal()
