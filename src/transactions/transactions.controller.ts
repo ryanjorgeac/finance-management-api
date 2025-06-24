@@ -27,7 +27,6 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiBody,
-  ApiQuery,
   ApiExtraModels,
 } from '@nestjs/swagger';
 import { GetUser } from 'src/auth/decorators';
@@ -91,9 +90,6 @@ export class TransactionsController {
     type: ExceptionResponseDto,
   })
   @ApiExtraModels(TransactionQueryDto)
-  @ApiQuery({
-    type: TransactionQueryDto,
-  })
   async findAll(
     @GetUser() user: { sub: string },
     @Query() query: TransactionQueryDto,

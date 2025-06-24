@@ -1,11 +1,10 @@
 import { User } from '../../users/entities/user.entity';
 import { Category } from '../../categories/entities/category.entity';
-import { Decimal } from '@prisma/client/runtime/library';
 import { TransactionType } from '@prisma/client';
 
 export class Transaction {
   id: string;
-  amount: Decimal;
+  amount: number;
   type: TransactionType;
   description: string;
   date: Date;
@@ -20,10 +19,16 @@ export class Transaction {
     Object.assign(this, partial);
   }
 
-  getBalanceImpact(): Decimal {
-    return this.type === TransactionType.INCOME
-      ? this.amount
-      : Decimal.mul(this.amount, -1);
+  getPrecisedAmount(): number {
+    return this.amount / 100;
+  }
+
+  static numberToCents(real: number): number {
+    return Math.round(real * 100);
+  }
+
+  getBalanceImpact(): number {
+    return this.type === TransactionType.INCOME ? this.amount : -this.amount;
   }
 
   isExpense(): boolean {
@@ -35,6 +40,7 @@ export class Transaction {
   }
 
   formatAmount(currencySymbol = '$'): string {
-    return `${this.isExpense() ? '-' : ''}${currencySymbol}${this.amount.toString()}`;
+    const amount = this.getPrecisedAmount();
+    return `${this.isExpense() ? '-' : ''}${currencySymbol}${amount.toFixed(2)}`;
   }
 }

@@ -1,5 +1,4 @@
 import { Expose, Transform, Type } from 'class-transformer';
-import { Decimal } from '@prisma/client/runtime/library';
 import { ApiProperty } from '@nestjs/swagger';
 import { TransactionType } from '@prisma/client';
 
@@ -7,21 +6,18 @@ export class TransactionResponseDto {
   @ApiProperty({
     description: 'Unique identifier for the transaction',
     example: '1234567890abcdef',
+    format: 'uuid',
   })
   @Expose()
   id: string;
 
   @ApiProperty({
-    description: 'Amount of the transaction',
-    example: 100.5,
+    description: 'Amount of the transaction in dollars',
+    example: 100.52,
   })
-  @Type(() => Decimal)
-  @Transform(({ value }) => {
-    if (!value) return null;
-    return typeof value === 'object' && value.d ? Number(value.d[0]) : value;
-  })
+  @Transform(({ value }) => value / 100)
   @Expose()
-  amount: Decimal;
+  amount: number;
 
   @ApiProperty({
     description: 'Type of the transaction (INCOME or EXPENSE)',
@@ -49,6 +45,7 @@ export class TransactionResponseDto {
   @ApiProperty({
     description: 'Unique identifier for the user who created the transaction',
     example: '1234567890abcdef',
+    format: 'uuid',
   })
   @Expose()
   userId: string;
@@ -56,6 +53,7 @@ export class TransactionResponseDto {
   @ApiProperty({
     description: 'Unique identifier for the category of the transaction',
     example: '1234567890abcdef',
+    format: 'uuid',
   })
   @Expose()
   categoryId: string;

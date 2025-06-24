@@ -36,10 +36,13 @@ export class TransactionsService {
       );
     }
 
+    const amountInCents = Math.round(createTransactionDto.amount * 100);
+
     return this.prisma.$transaction(async (prismaClient) => {
       const prismaTransaction = await prismaClient.transaction.create({
         data: {
           ...createTransactionDto,
+          amount: amountInCents,
           userId,
         },
       });
@@ -98,7 +101,7 @@ export class TransactionsService {
         skip,
         take: limit,
         orderBy: { date: order },
-        include: { category: true },
+        include: { category: false },
       }),
       this.prisma.transaction.count({ where }),
     ]);

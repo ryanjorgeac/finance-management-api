@@ -19,7 +19,6 @@ enum Order {
 export class TransactionQueryDto {
   @ApiProperty({
     description: 'Unique identifier for the user',
-    example: '1234567890abcdef',
     required: false,
   })
   @IsOptional()
@@ -79,7 +78,6 @@ export class TransactionQueryDto {
 
   @ApiProperty({
     description: 'Search term for filtering transactions',
-    example: 'Some description',
     required: false,
   })
   @IsOptional()
@@ -88,7 +86,6 @@ export class TransactionQueryDto {
 
   @ApiProperty({
     description: 'Sorting order for the transactions (asc or desc)',
-    example: 'desc',
     enum: Order,
     enumName: 'Order',
     required: false,

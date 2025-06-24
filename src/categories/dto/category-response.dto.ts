@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Decimal } from '@prisma/client/runtime/library';
 import { Expose, Transform } from 'class-transformer';
+import { IsNumber, Min } from 'class-validator';
 
 export class CategoryResponseDto {
   @ApiProperty({
@@ -42,13 +42,11 @@ export class CategoryResponseDto {
     description: 'Budget amount for the category',
     example: 500.0,
   })
-  @Transform(({ value }) => {
-    if (!value) return null;
-    // Convert Decimal object to number
-    return typeof value === 'object' && value.d ? Number(value.d[0]) : value;
-  })
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  @Transform(({ value }) => Number(value))
   @Expose()
-  budgetAmount: Decimal | null;
+  budgetAmount: number | null;
 
   @ApiProperty({
     description: 'Unique identifier for the user who created the transaction',

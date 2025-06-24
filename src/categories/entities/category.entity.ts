@@ -1,6 +1,5 @@
 import { User } from '../../users/entities/user.entity';
 import { Transaction } from '../../transactions/entities/transaction.entity';
-import { Decimal } from '@prisma/client/runtime/library';
 
 enum TransactionTypes {
   INCOME = 'INCOME',
@@ -13,7 +12,7 @@ export class Category {
   description: string | null;
   color: string | null;
   icon: string | null;
-  budgetAmount: Decimal | null;
+  budgetAmount: number | null;
   userId: string;
   user: User;
   transactions: Transaction[];
@@ -25,29 +24,34 @@ export class Category {
     Object.assign(this, partial);
   }
 
-  getTotalSpending(startDate?: Date, endDate?: Date): Decimal {
+  getPrecisedBudget(): number | null {
+    return this.budgetAmount ? this.budgetAmount / 100 : null;
+  }
+
+  static numberTocents(dollars: number): number {
+    return Math.round(dollars * 100);
+  }
+
+  getTotalSpending(startDate?: Date, endDate?: Date): number {
     if (!this.transactions?.length) {
-      return new Decimal(0);
+      return 0;
     }
 
     return this.transactions
       .filter((transaction) => {
         if (transaction.type !== TransactionTypes.EXPENSE) return false;
-
         if (startDate && transaction.date < startDate) return false;
         if (endDate && transaction.date > endDate) return false;
 
         return true;
       })
-      .reduce((sum, transaction) => {
-        return Decimal.add(sum, transaction.amount as unknown as Decimal);
-      }, new Decimal(0));
+      .reduce((sum, transaction) => sum + transaction.amount, 0);
   }
 
   getBudgetStatus(startDate?: Date, endDate?: Date): number | null {
     if (!this.budgetAmount) return null;
 
     const spent = this.getTotalSpending(startDate, endDate);
-    return Number(Decimal.div(spent, this.budgetAmount).mul(100));
+    return (spent / this.budgetAmount) * 100;
   }
 }
