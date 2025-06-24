@@ -1,4 +1,4 @@
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ApiProperty } from '@nestjs/swagger';
 import { TransactionType } from '@prisma/client';
@@ -16,6 +16,10 @@ export class TransactionResponseDto {
     example: 100.5,
   })
   @Type(() => Decimal)
+  @Transform(({ value }) => {
+    if (!value) return null;
+    return typeof value === 'object' && value.d ? Number(value.d[0]) : value;
+  })
   @Expose()
   amount: Decimal;
 
