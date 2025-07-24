@@ -1,10 +1,17 @@
 import { User } from '../../users/entities/user.entity';
 import { Transaction } from '../../transactions/entities/transaction.entity';
+import { TransactionType } from '@prisma/client';
 
 enum TransactionTypes {
   INCOME = 'INCOME',
   EXPENSE = 'EXPENSE',
 }
+
+type TransactionSummary = {
+  amount: number;
+  type: TransactionType;
+  date: Date;
+};
 
 export class Category {
   id: string;
@@ -15,20 +22,38 @@ export class Category {
   budgetAmount: number | null;
   userId: string;
   user: User;
-  transactions: Transaction[];
+  transactions: TransactionSummary[] | Transaction[];
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  spentAmount?: number;
+  remainingAmount?: number;
+  transactionCount?: number;
 
   constructor(partial: Partial<Category>) {
     Object.assign(this, partial);
+    this.spentAmount = this.getTotalSpending();
+    this.remainingAmount = this.getRemainingAmount();
+    this.transactionCount = this.getTransactionCount();
+  }
+
+  getSpentAmount(): number {
+    return this.getTotalSpending();
+  }
+
+  getRemainingAmount(): number {
+    return this.budgetAmount ? this.budgetAmount - this.getSpentAmount() : 0;
+  }
+
+  getTransactionCount(): number {
+    return this.transactions?.length || 0;
   }
 
   getPrecisedBudget(): number | null {
     return this.budgetAmount ? this.budgetAmount / 100 : null;
   }
 
-  static numberTocents(dollars: number): number {
+  static numberToCents(dollars: number): number {
     return Math.round(dollars * 100);
   }
 
@@ -46,12 +71,5 @@ export class Category {
         return true;
       })
       .reduce((sum, transaction) => sum + transaction.amount, 0);
-  }
-
-  getBudgetStatus(startDate?: Date, endDate?: Date): number | null {
-    if (!this.budgetAmount) return null;
-
-    const spent = this.getTotalSpending(startDate, endDate);
-    return (spent / this.budgetAmount) * 100;
   }
 }

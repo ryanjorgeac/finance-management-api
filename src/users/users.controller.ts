@@ -41,7 +41,6 @@ export class UsersController {
     type: UserResponseDto,
   })
   async getProfile(@GetUser() user: { sub: string }): Promise<User | null> {
-    console.log(user);
     const foundUser = await this.usersService.findOne(user.sub);
     return foundUser;
   }
@@ -68,7 +67,6 @@ export class UsersController {
     @GetUser() user: { sub: string },
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
-    console.log(user);
     const updatedUser = await this.usersService.update(user.sub, updateUserDto);
     return new UserResponseDto(updatedUser);
   }
@@ -104,7 +102,6 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - requires admin role' })
   async findAll(): Promise<UserResponseDto[]> {
-    console.log('This is a comment');
     const users = await this.usersService.findAll();
     const usersDto = users.map((user) => new UserResponseDto(user));
     return usersDto;

@@ -32,9 +32,20 @@ export class CategoriesService {
         userId,
       },
       orderBy: { name: 'asc' },
+      include: {
+        transactions: {
+          select: {
+            amount: true,
+            type: true,
+            date: true,
+          },
+        },
+      },
     });
 
-    return prismaCategories.map((category) => new Category(category));
+    return prismaCategories.map((categoryData) => {
+      return new Category(categoryData);
+    });
   }
 
   async findOne(id: string, userId: string): Promise<Category> {

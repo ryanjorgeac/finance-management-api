@@ -81,6 +81,29 @@ export class CategoryResponseDto {
   @Expose()
   updatedAt: Date;
 
+  @ApiProperty({
+    description: 'Total amount spent in this category',
+    example: 350.75,
+  })
+  @Transform(({ value }) => value / 100)
+  @Expose()
+  spentAmount: number;
+
+  @ApiProperty({
+    description: 'Remaining budget amount for this category',
+    example: 149.25,
+  })
+  @Transform(({ value }) => value / 100)
+  @Expose()
+  remainingAmount: number;
+
+  @ApiProperty({
+    description: 'Total number of transactions in this category',
+    example: 12,
+  })
+  @Expose()
+  transactionCount: number;
+
   constructor(partial: Partial<CategoryResponseDto>) {
     Object.assign(this, partial);
   }
