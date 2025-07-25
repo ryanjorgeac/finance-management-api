@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform } from 'class-transformer';
+import { Exclude, Expose, Transform } from 'class-transformer';
 import { IsNumber, Min } from 'class-validator';
+import { Transaction } from 'src/transactions/entities/transaction.entity';
+import { TransactionSummary } from 'src/categories/entities/category.entity';
 
 export class CategoryResponseDto {
   @ApiProperty({
@@ -44,7 +46,7 @@ export class CategoryResponseDto {
   })
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => Number(value / 100))
   @Expose()
   budgetAmount: number | null;
 
@@ -103,6 +105,9 @@ export class CategoryResponseDto {
   })
   @Expose()
   transactionCount: number;
+
+  @Exclude()
+  transactions: TransactionSummary[] | Transaction[];
 
   constructor(partial: Partial<CategoryResponseDto>) {
     Object.assign(this, partial);

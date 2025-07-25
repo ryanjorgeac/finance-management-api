@@ -39,6 +39,7 @@ export class CategoriesService {
             type: true,
             date: true,
           },
+          orderBy: { date: 'desc' },
         },
       },
     });

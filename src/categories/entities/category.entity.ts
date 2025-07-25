@@ -7,7 +7,7 @@ enum TransactionTypes {
   EXPENSE = 'EXPENSE',
 }
 
-type TransactionSummary = {
+export type TransactionSummary = {
   amount: number;
   type: TransactionType;
   date: Date;
@@ -26,9 +26,9 @@ export class Category {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-  spentAmount?: number;
-  remainingAmount?: number;
-  transactionCount?: number;
+  spentAmount: number;
+  remainingAmount: number;
+  transactionCount: number;
 
   constructor(partial: Partial<Category>) {
     Object.assign(this, partial);
@@ -37,39 +37,37 @@ export class Category {
     this.transactionCount = this.getTransactionCount();
   }
 
-  getSpentAmount(): number {
-    return this.getTotalSpending();
-  }
-
   getRemainingAmount(): number {
-    return this.budgetAmount ? this.budgetAmount - this.getSpentAmount() : 0;
+    console.log('[2] Calculating remaining budget for category:', this.name);
+    console.log('Budget amount:', this.budgetAmount);
+    console.log('Spent amount:', this.spentAmount);
+    return this.budgetAmount ? this.budgetAmount + this.spentAmount : 0;
   }
 
   getTransactionCount(): number {
-    return this.transactions?.length || 0;
-  }
-
-  getPrecisedBudget(): number | null {
-    return this.budgetAmount ? this.budgetAmount / 100 : null;
-  }
-
-  static numberToCents(dollars: number): number {
-    return Math.round(dollars * 100);
+    console.log('[3] Calculating transaction count for category:', this.name);
+    return this.transactions.length || 0;
   }
 
   getTotalSpending(startDate?: Date, endDate?: Date): number {
+    console.log('[1] Calculating total spending for category:', this.name);
+    console.log('Transactions:', this.transactions);
     if (!this.transactions?.length) {
       return 0;
     }
 
     return this.transactions
       .filter((transaction) => {
-        if (transaction.type !== TransactionTypes.EXPENSE) return false;
         if (startDate && transaction.date < startDate) return false;
         if (endDate && transaction.date > endDate) return false;
-
         return true;
       })
-      .reduce((sum, transaction) => sum + transaction.amount, 0);
+      .reduce((sum, transaction) => {
+        const amount =
+          transaction.type === TransactionTypes.INCOME
+            ? transaction.amount
+            : -transaction.amount;
+        return sum + amount;
+      }, 0);
   }
 }

@@ -23,10 +23,6 @@ export class Transaction {
     return this.amount / 100;
   }
 
-  static numberToCents(real: number): number {
-    return Math.round(real * 100);
-  }
-
   getBalanceImpact(): number {
     return this.type === TransactionType.INCOME ? this.amount : -this.amount;
   }
