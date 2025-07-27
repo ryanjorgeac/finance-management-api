@@ -8,6 +8,7 @@ import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CategoryWithSummary } from 'src/common/types/category-with-summary';
+import { CategoriesSummaryDto } from './dto/categories-summary.dto';
 
 @Injectable()
 export class CategoriesService {
@@ -39,8 +40,8 @@ export class CategoriesService {
       c."isActive",
       c."createdAt",
       c."updatedAt",
-      COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END), 0)::float AS "spentAmount",
-      COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE 0 END), 0)::float AS "incomeAmount",
+      COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END), 0) AS "spentAmount",
+      COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE 0 END), 0) AS "incomeAmount",
       COALESCE(COUNT(t.id), 0)::integer AS "transactionCount"
     FROM
       categories AS c
@@ -133,6 +134,52 @@ export class CategoriesService {
     }
     await this.prisma.category.delete({
       where: { id },
+    });
+  }
+
+  async getUserSummary(userId: string): Promise<CategoriesSummaryDto> {
+    const summary = await this.prisma.$queryRaw<
+      [
+        {
+          totalBudget: bigint | null;
+          totalSpent: bigint;
+          totalIncome: bigint;
+        },
+      ]
+    >`
+    WITH budget_total AS (
+      SELECT COALESCE(SUM("budgetAmount"), 0) AS total_budget
+      FROM categories
+      WHERE "userId" = ${userId} AND "isActive" = true
+    ),
+    transaction_totals AS (
+      SELECT 
+        COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END), 0) AS total_spent,
+        COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE 0 END), 0) AS total_income
+      FROM transactions t
+      INNER JOIN categories c ON t."categoryId" = c.id
+      WHERE c."userId" = ${userId} AND c."isActive" = true
+    )
+    SELECT 
+      bt.total_budget AS "totalBudget",
+      tt.total_spent AS "totalSpent",
+      tt.total_income AS "totalIncome"
+    FROM budget_total bt
+    CROSS JOIN transaction_totals tt;
+  `;
+    // AND c."isActive" = true -> This condition ensures we only consider active categories but in the future we might want to calculate the user balance including inactive categories as well.
+
+    const { totalBudget, totalSpent, totalIncome } = summary[0];
+
+    const totalBudgetNum = totalBudget ? Number(totalBudget) : 0;
+    const totalSpentNum = Number(totalSpent);
+    const totalIncomeNum = Number(totalIncome);
+    const remainingBudget = totalBudgetNum - totalSpentNum + totalIncomeNum;
+
+    return new CategoriesSummaryDto({
+      totalBudget: totalBudgetNum,
+      totalSpent: totalSpentNum,
+      remainingBudget,
     });
   }
 }
