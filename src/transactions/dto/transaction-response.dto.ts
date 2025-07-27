@@ -1,6 +1,7 @@
 import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { TransactionType } from '@prisma/client';
+import { centsTodollars } from 'src/common/utils/money';
 
 export class TransactionResponseDto {
   @ApiProperty({
@@ -15,7 +16,7 @@ export class TransactionResponseDto {
     description: 'Amount of the transaction in dollars',
     example: 100.52,
   })
-  @Transform(({ value }) => value / 100)
+  @Transform(centsTodollars)
   @Expose()
   amount: number;
 

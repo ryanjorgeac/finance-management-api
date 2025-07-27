@@ -3,6 +3,7 @@ import { Exclude, Expose, Transform } from 'class-transformer';
 import { IsNumber, Min } from 'class-validator';
 import { Transaction } from 'src/transactions/entities/transaction.entity';
 import { TransactionSummary } from 'src/common/types/transaction-summary';
+import { centsTodollars } from 'src/common/utils/money';
 
 export class CategoryResponseDto {
   @ApiProperty({
@@ -46,7 +47,7 @@ export class CategoryResponseDto {
   })
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
-  @Transform(({ value }) => Number(value / 100))
+  @Transform(centsTodollars)
   @Expose()
   budgetAmount: number | null;
 
@@ -87,7 +88,7 @@ export class CategoryResponseDto {
     description: 'Total amount spent in this category',
     example: 350.75,
   })
-  @Transform(({ value }) => value / 100)
+  @Transform(centsTodollars)
   @Expose()
   spentAmount: number;
 
@@ -95,7 +96,7 @@ export class CategoryResponseDto {
     description: 'Remaining budget amount for this category',
     example: 149.25,
   })
-  @Transform(({ value }) => value / 100)
+  @Transform(centsTodollars)
   @Expose()
   remainingAmount: number;
 
