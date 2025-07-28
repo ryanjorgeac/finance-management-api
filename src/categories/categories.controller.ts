@@ -24,8 +24,8 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { GetUser } from 'src/auth/decorators';
-import { ExceptionResponseDto } from 'src/exceptions/exception-response.dto';
+import { GetUser } from '../auth/decorators';
+import { ExceptionResponseDto } from '../exceptions/exception-response.dto';
 import {
   CategoriesSummaryDto,
   CreateCategoryDto,

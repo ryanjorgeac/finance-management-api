@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
-import { centsTodollars } from 'src/common/utils/money';
+import { centsTodollars } from '../../common/utils/money';
 
 export class CategoriesSummaryDto {
   @ApiProperty({

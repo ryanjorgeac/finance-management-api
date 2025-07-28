@@ -45,9 +45,11 @@ export class CreateCategoryDto {
   @ApiProperty({
     description: 'Budget amount for the category',
     example: 1000,
+    required: false,
   })
+  @IsOptional()
   @IsNumber()
-  budgetAmount: number;
+  budgetAmount?: number;
 
   @ApiProperty({
     description: 'Indicates if the category is active',

@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { IsNumber, Min } from 'class-validator';
-import { Transaction } from 'src/transactions/entities/transaction.entity';
-import { TransactionSummary } from 'src/common/types/transaction-summary';
-import { centsTodollars } from 'src/common/utils/money';
+import { Transaction } from '../../transactions/entities/transaction.entity';
+import { TransactionSummary } from '../../common/types/transaction-summary';
+import { centsTodollars } from '../../common/utils/money';
 
 export class CategoryResponseDto {
   @ApiProperty({
