@@ -7,7 +7,7 @@ import { PrismaService } from '../database/prisma.service';
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { CategoryWithSummary } from 'src/common/types/category-with-summary';
+import { CategoryWithSummary } from '../common/types/category-with-summary';
 import { CategoriesSummaryDto } from './dto/categories-summary.dto';
 
 @Injectable()
@@ -18,9 +18,14 @@ export class CategoriesService {
     userId: string,
     createCategoryDto: CreateCategoryDto,
   ): Promise<Category> {
+    const budgetAmountInCents = createCategoryDto.budgetAmount 
+      ? Math.round(createCategoryDto.budgetAmount * 100) 
+      : null;
+
     const prismaCategory = await this.prisma.category.create({
       data: {
         ...createCategoryDto,
+        budgetAmount: budgetAmountInCents,
         userId,
       },
     });
@@ -84,9 +89,18 @@ export class CategoriesService {
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<Category> {
     await this.findOne(id, userId);
+    
+    // Convert budgetAmount from dollars to cents if provided
+    const updateData: any = { ...updateCategoryDto };
+    if (updateCategoryDto.budgetAmount !== undefined) {
+      updateData.budgetAmount = updateCategoryDto.budgetAmount 
+        ? Math.round(updateCategoryDto.budgetAmount * 100) 
+        : null;
+    }
+
     const updatedPrismaCategory = await this.prisma.category.update({
       where: { id },
-      data: updateCategoryDto,
+      data: updateData,
     });
 
     return new Category(updatedPrismaCategory);
