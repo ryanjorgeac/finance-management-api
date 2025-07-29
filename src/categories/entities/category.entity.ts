@@ -15,10 +15,10 @@ export class Category {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-  spentAmount: number;
-  incomeAmount: number;
-  remainingAmount: number;
-  transactionCount: number;
+  spentAmount: number | null;
+  incomeAmount: number | null;
+  remainingAmount: number | null;
+  transactionCount: number | null;
 
   constructor(partial: Partial<Category>) {
     Object.assign(this, partial);
