@@ -8,17 +8,17 @@ export class Category {
   description: string | null;
   color: string | null;
   icon: string | null;
-  budgetAmount: number | null;
+  budgetAmount: number;
   userId: string;
   user: User;
   transactions: TransactionSummary[] | Transaction[];
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-  spentAmount: number | null;
-  incomeAmount: number | null;
-  remainingAmount: number | null;
-  transactionCount: number | null;
+  spentAmount: number;
+  incomeAmount: number;
+  remainingAmount: number;
+  transactionCount: number;
 
   constructor(partial: Partial<Category>) {
     Object.assign(this, partial);
@@ -26,7 +26,7 @@ export class Category {
     this.spentAmount = this.convertToNumber(partial.spentAmount) ?? 0;
     this.incomeAmount = this.convertToNumber(partial.incomeAmount) ?? 0;
     this.transactionCount = this.convertToNumber(partial.transactionCount) ?? 0;
-    this.budgetAmount = this.convertToNumber(partial.budgetAmount) ?? null;
+    this.budgetAmount = this.convertToNumber(partial.budgetAmount) ?? 0;
 
     this.remainingAmount = this.getRemainingAmount();
   }
@@ -39,8 +39,6 @@ export class Category {
   }
 
   getRemainingAmount(): number {
-    return this.budgetAmount
-      ? this.budgetAmount - this.spentAmount + this.incomeAmount
-      : 0;
+    return this.budgetAmount - this.spentAmount + this.incomeAmount;
   }
 }
