@@ -104,17 +104,15 @@ export class CategoriesService {
   ): Promise<Category> {
     await this.findOne(id, userId);
 
-    const budgetAmountInCents = updateCategoryDto.budgetAmount
-      ? Math.round(updateCategoryDto.budgetAmount * 100)
-      : 0;
+    if (updateCategoryDto.budgetAmount) {
+      updateCategoryDto.budgetAmount = Math.round(
+        updateCategoryDto.budgetAmount * 100,
+      );
+    }
 
     const updatedPrismaCategory = await this.prisma.category.update({
       where: { id },
-      data: {
-        ...updateCategoryDto,
-        budgetAmount: budgetAmountInCents,
-        userId,
-      },
+      data: { ...updateCategoryDto, userId },
     });
 
     return new Category(updatedPrismaCategory);
