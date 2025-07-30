@@ -3,10 +3,28 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { getCategoriesSummary, getUserCategories } from '@prisma/client/sql';
 import { PrismaService } from '../database/prisma.service';
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { CategoriesSummaryDto } from './dto/categories-summary.dto';
+
+// Interface to type the raw query result
+interface RawCategoryData {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string;
+  icon: string;
+  budgetAmount: number | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  spentAmount: bigint;
+  incomeAmount: bigint;
+  transactionCount: number;
+}
 
 @Injectable()
 export class CategoriesService {
@@ -16,9 +34,14 @@ export class CategoriesService {
     userId: string,
     createCategoryDto: CreateCategoryDto,
   ): Promise<Category> {
+    const budgetAmountInCents = createCategoryDto.budgetAmount
+      ? Math.round(createCategoryDto.budgetAmount * 100)
+      : 0;
+
     const prismaCategory = await this.prisma.category.create({
       data: {
         ...createCategoryDto,
+        budgetAmount: budgetAmountInCents,
         userId,
       },
     });
@@ -26,26 +49,33 @@ export class CategoriesService {
     return new Category(prismaCategory);
   }
 
-  async findAll(userId: string): Promise<Category[]> {
-    const prismaCategories = await this.prisma.category.findMany({
-      where: {
-        userId,
-      },
-      orderBy: { name: 'asc' },
-      include: {
-        transactions: {
-          select: {
-            amount: true,
-            type: true,
-            date: true,
-          },
-          orderBy: { date: 'desc' },
-        },
-      },
-    });
+  private convertRawCategoryData(data: RawCategoryData): Partial<Category> {
+    return {
+      ...data,
+      spentAmount: this.convertBigIntToNumber(data.spentAmount),
+      incomeAmount: this.convertBigIntToNumber(data.incomeAmount),
+      budgetAmount: data.budgetAmount ?? 0,
+    };
+  }
 
-    return prismaCategories.map((categoryData) => {
-      return new Category(categoryData);
+  private convertBigIntToNumber(
+    value: bigint | number | null | undefined,
+  ): number | undefined {
+    if (value === null || value === undefined) return undefined;
+    if (typeof value === 'bigint') return Number(value);
+    if (typeof value === 'number') return value;
+    const converted = Number(value);
+    return isNaN(converted) ? undefined : converted;
+  }
+
+  async findAll(userId: string): Promise<Category[]> {
+    const categoriesWithSummary = (await this.prisma.$queryRawTyped(
+      getUserCategories(userId),
+    )) as RawCategoryData[];
+
+    return categoriesWithSummary.map((data) => {
+      const processed = this.convertRawCategoryData(data);
+      return new Category(processed);
     });
   }
 
@@ -73,9 +103,18 @@ export class CategoriesService {
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<Category> {
     await this.findOne(id, userId);
+
+    const budgetAmountInCents = updateCategoryDto.budgetAmount
+      ? Math.round(updateCategoryDto.budgetAmount * 100)
+      : 0;
+
     const updatedPrismaCategory = await this.prisma.category.update({
       where: { id },
-      data: updateCategoryDto,
+      data: {
+        ...updateCategoryDto,
+        budgetAmount: budgetAmountInCents,
+        userId,
+      },
     });
 
     return new Category(updatedPrismaCategory);
@@ -123,6 +162,32 @@ export class CategoriesService {
     }
     await this.prisma.category.delete({
       where: { id },
+    });
+  }
+
+  async getUserSummary(userId: string): Promise<CategoriesSummaryDto> {
+    const summary = await this.prisma.$queryRawTyped(
+      getCategoriesSummary(userId),
+    );
+
+    const result = summary as Array<{
+      totalBudget: bigint | null;
+      totalSpent: bigint;
+      totalIncome: bigint;
+    }>;
+    // AND c."isActive" = true -> This condition ensures we only consider active categories but in the future we might want to calculate the user balance including inactive categories as well.
+
+    const { totalBudget, totalSpent, totalIncome } = result[0];
+
+    const totalBudgetNum = totalBudget ? Number(totalBudget) : 0;
+    const totalSpentNum = Number(totalSpent);
+    const totalIncomeNum = Number(totalIncome);
+    const remainingBudget = totalBudgetNum - totalSpentNum + totalIncomeNum;
+
+    return new CategoriesSummaryDto({
+      totalBudget: totalBudgetNum,
+      totalSpent: totalSpentNum,
+      remainingBudget,
     });
   }
 }
