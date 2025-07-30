@@ -29,7 +29,7 @@ model Category {
   description  String?
   color        String?
   icon         String?
-  budgetAmount Int?
+  budgetAmount Int           @default(0)
   userId       String
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]

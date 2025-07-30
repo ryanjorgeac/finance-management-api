@@ -8,8 +8,8 @@ SELECT
       c."isActive",
       c."createdAt",
       c."updatedAt",
-      COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END), 0) AS "spentAmount",
-      COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE 0 END), 0) AS "incomeAmount",
+      CAST(COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END), 0) AS INTEGER) AS "spentAmount",
+      CAST(COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE 0 END), 0) AS INTEGER) AS "incomeAmount",
       CAST(COALESCE(COUNT(t.id), 0) AS INTEGER) AS "transactionCount"
     FROM
       categories AS c

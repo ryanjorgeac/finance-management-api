@@ -49,7 +49,7 @@ export class CategoryResponseDto {
   @Min(0.01)
   @Transform(centsTodollars)
   @Expose()
-  budgetAmount: number | null;
+  budgetAmount: number;
 
   @ApiProperty({
     description: 'Unique identifier for the user who created the transaction',

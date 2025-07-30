@@ -10,6 +10,22 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CategoriesSummaryDto } from './dto/categories-summary.dto';
 
+// Interface to type the raw query result
+interface RawCategoryData {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string;
+  icon: string;
+  budgetAmount: number | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  spentAmount: bigint;
+  incomeAmount: bigint;
+  transactionCount: number;
+}
+
 @Injectable()
 export class CategoriesService {
   constructor(private prisma: PrismaService) {}
@@ -20,7 +36,7 @@ export class CategoriesService {
   ): Promise<Category> {
     const budgetAmountInCents = createCategoryDto.budgetAmount
       ? Math.round(createCategoryDto.budgetAmount * 100)
-      : null;
+      : 0;
 
     const prismaCategory = await this.prisma.category.create({
       data: {
@@ -33,33 +49,33 @@ export class CategoriesService {
     return new Category(prismaCategory);
   }
 
+  private convertRawCategoryData(data: RawCategoryData): Partial<Category> {
+    return {
+      ...data,
+      spentAmount: this.convertBigIntToNumber(data.spentAmount),
+      incomeAmount: this.convertBigIntToNumber(data.incomeAmount),
+      budgetAmount: data.budgetAmount ?? 0,
+    };
+  }
+
+  private convertBigIntToNumber(
+    value: bigint | number | null | undefined,
+  ): number | undefined {
+    if (value === null || value === undefined) return undefined;
+    if (typeof value === 'bigint') return Number(value);
+    if (typeof value === 'number') return value;
+    const converted = Number(value);
+    return isNaN(converted) ? undefined : converted;
+  }
+
   async findAll(userId: string): Promise<Category[]> {
-    const categoriesWithSummary = await this.prisma.$queryRawTyped(
+    const categoriesWithSummary = (await this.prisma.$queryRawTyped(
       getUserCategories(userId),
-    );
+    )) as RawCategoryData[];
 
     return categoriesWithSummary.map((data) => {
-      const categoryData = {
-        ...data,
-        spentAmount:
-          typeof data.spentAmount === 'bigint'
-            ? Number(data.spentAmount)
-            : data.spentAmount,
-        incomeAmount:
-          typeof data.incomeAmount === 'bigint'
-            ? Number(data.incomeAmount)
-            : data.incomeAmount,
-        transactionCount:
-          typeof data.transactionCount === 'bigint'
-            ? Number(data.transactionCount)
-            : data.transactionCount,
-        budgetAmount:
-          data.budgetAmount && typeof data.budgetAmount === 'bigint'
-            ? Number(data.budgetAmount)
-            : data.budgetAmount,
-      };
-
-      return new Category(categoryData);
+      const processed = this.convertRawCategoryData(data);
+      return new Category(processed);
     });
   }
 
@@ -90,7 +106,7 @@ export class CategoriesService {
 
     const budgetAmountInCents = updateCategoryDto.budgetAmount
       ? Math.round(updateCategoryDto.budgetAmount * 100)
-      : null;
+      : 0;
 
     const updatedPrismaCategory = await this.prisma.category.update({
       where: { id },
