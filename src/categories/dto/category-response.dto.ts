@@ -1,9 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
-import { IsNumber, Min } from 'class-validator';
+import { IsString } from 'class-validator';
 import { Transaction } from '../../transactions/entities/transaction.entity';
 import { TransactionSummary } from '../../common/types/transaction-summary';
-import { centsTodollars } from '../../common/utils/money';
 
 export class CategoryResponseDto {
   @ApiProperty({
@@ -43,13 +42,12 @@ export class CategoryResponseDto {
 
   @ApiProperty({
     description: 'Budget amount for the category',
-    example: 500.0,
+    example: '500.00',
+    type: 'string',
   })
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0.01)
-  @Transform(centsTodollars)
+  @IsString()
   @Expose()
-  budgetAmount: number;
+  budgetAmount: string;
 
   @ApiProperty({
     description: 'Unique identifier for the user who created the transaction',
@@ -85,20 +83,31 @@ export class CategoryResponseDto {
   updatedAt: Date;
 
   @ApiProperty({
-    description: 'Total amount spent in this category',
-    example: 350.75,
+    description: 'Total amount spent in this category in dollars',
+    example: '350.75',
+    type: 'string',
   })
-  @Transform(centsTodollars)
   @Expose()
-  spentAmount: number;
+  @IsString()
+  spentAmount: string;
 
   @ApiProperty({
-    description: 'Remaining budget amount for this category',
-    example: 149.25,
+    description: 'Total income amount in this category in dollars',
+    example: '50.00',
+    type: 'string',
   })
-  @Transform(centsTodollars)
   @Expose()
-  remainingAmount: number;
+  @IsString()
+  incomeAmount: string;
+
+  @ApiProperty({
+    description: 'Remaining budget amount for this category in dollars',
+    example: '149.25',
+    type: 'string',
+  })
+  @Expose()
+  @IsString()
+  remainingAmount: string;
 
   @ApiProperty({
     description: 'Total number of transactions in this category',

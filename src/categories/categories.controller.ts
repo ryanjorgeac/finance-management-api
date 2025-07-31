@@ -32,6 +32,7 @@ import {
   UpdateCategoryDto,
   CategoryResponseDto,
 } from './dto';
+import { fromEntities, fromEntity } from 'src/common/utils/category-mapper';
 
 @ApiTags('Categories')
 @ApiBearerAuth()
@@ -67,7 +68,7 @@ export class CategoriesController {
       user.sub,
       createCategoryDto,
     );
-    return new CategoryResponseDto(category);
+    return fromEntity(category);
   }
 
   @Get()
@@ -82,7 +83,7 @@ export class CategoriesController {
     @GetUser() user: { sub: string },
   ): Promise<CategoryResponseDto[]> {
     const categories = await this.categoriesService.findAll(user.sub);
-    return categories.map((category) => new CategoryResponseDto(category));
+    return fromEntities(categories);
   }
 
   @Get('summary')
@@ -130,7 +131,7 @@ export class CategoriesController {
     if (!category) {
       throw new NotFoundException(`Category with ID ${id} not found`);
     }
-    return new CategoryResponseDto(category);
+    return fromEntity(category);
   }
 
   @Patch(':id')
@@ -172,7 +173,7 @@ export class CategoriesController {
       user.sub,
       updateCategoryDto,
     );
-    return new CategoryResponseDto(category);
+    return fromEntity(category);
   }
 
   @Delete(':id')
