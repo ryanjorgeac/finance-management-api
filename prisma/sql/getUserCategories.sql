@@ -8,9 +8,9 @@ SELECT
       c."isActive",
       c."createdAt",
       c."updatedAt",
-      CAST(COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END), 0) AS INTEGER) AS "spentAmount",
-      CAST(COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE 0 END), 0) AS INTEGER) AS "incomeAmount",
-      CAST(COALESCE(COUNT(t.id), 0) AS INTEGER) AS "transactionCount"
+      COALESCE(CAST(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END) AS BIGINT), CAST(0 AS BIGINT)) AS "spentAmount",
+      COALESCE(CAST(SUM(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE 0 END) AS BIGINT), CAST(0 AS BIGINT)) AS "incomeAmount",
+      COALESCE(CAST(COUNT(t.id) AS INTEGER), CAST(0 AS INTEGER)) AS "transactionCount"
     FROM
       categories AS c
     LEFT JOIN

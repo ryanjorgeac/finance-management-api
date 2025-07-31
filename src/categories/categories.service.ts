@@ -3,28 +3,34 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { z } from 'zod';
 import { getCategoriesSummary, getUserCategories } from '@prisma/client/sql';
 import { PrismaService } from '../database/prisma.service';
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CategoriesSummaryDto } from './dto/categories-summary.dto';
+import {
+  bigintToMoneyString,
+  dollarsToCents,
+} from '../common/utils/bigint-transform';
 
-// Interface to type the raw query result
-interface RawCategoryData {
-  id: string;
-  name: string;
-  description: string | null;
-  color: string;
-  icon: string;
-  budgetAmount: number | null;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  spentAmount: bigint;
-  incomeAmount: bigint;
-  transactionCount: number;
-}
+const RawCategoryData = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  color: z.string(),
+  icon: z.string(),
+  budgetAmount: z.bigint(),
+  isActive: z.boolean(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  spentAmount: z.bigint(),
+  incomeAmount: z.bigint(),
+  transactionCount: z.number(),
+});
+
+const CategoriesSummaryArraySchema = z.array(RawCategoryData);
 
 @Injectable()
 export class CategoriesService {
@@ -34,9 +40,9 @@ export class CategoriesService {
     userId: string,
     createCategoryDto: CreateCategoryDto,
   ): Promise<Category> {
-    const budgetAmountInCents = createCategoryDto.budgetAmount
-      ? Math.round(createCategoryDto.budgetAmount * 100)
-      : 0;
+    const budgetAmountInCents: bigint = createCategoryDto.budgetAmount
+      ? dollarsToCents(createCategoryDto.budgetAmount)
+      : 0n;
 
     const prismaCategory = await this.prisma.category.create({
       data: {
@@ -49,33 +55,17 @@ export class CategoriesService {
     return new Category(prismaCategory);
   }
 
-  private convertRawCategoryData(data: RawCategoryData): Partial<Category> {
-    return {
-      ...data,
-      spentAmount: this.convertBigIntToNumber(data.spentAmount),
-      incomeAmount: this.convertBigIntToNumber(data.incomeAmount),
-      budgetAmount: data.budgetAmount ?? 0,
-    };
-  }
-
-  private convertBigIntToNumber(
-    value: bigint | number | null | undefined,
-  ): number | undefined {
-    if (value === null || value === undefined) return undefined;
-    if (typeof value === 'bigint') return Number(value);
-    if (typeof value === 'number') return value;
-    const converted = Number(value);
-    return isNaN(converted) ? undefined : converted;
-  }
-
   async findAll(userId: string): Promise<Category[]> {
-    const categoriesWithSummary = (await this.prisma.$queryRawTyped(
+    const categoriesWithSummary = await this.prisma.$queryRawTyped(
       getUserCategories(userId),
-    )) as RawCategoryData[];
+    );
 
-    return categoriesWithSummary.map((data) => {
-      const processed = this.convertRawCategoryData(data);
-      return new Category(processed);
+    const validateResults = CategoriesSummaryArraySchema.parse(
+      categoriesWithSummary,
+    );
+
+    return validateResults.map((data) => {
+      return new Category(data);
     });
   }
 
@@ -104,15 +94,16 @@ export class CategoriesService {
   ): Promise<Category> {
     await this.findOne(id, userId);
 
-    if (updateCategoryDto.budgetAmount) {
-      updateCategoryDto.budgetAmount = Math.round(
-        updateCategoryDto.budgetAmount * 100,
-      );
-    }
+    const budgetAmountInCents = updateCategoryDto.budgetAmount
+      ? dollarsToCents(updateCategoryDto.budgetAmount)
+      : undefined;
 
     const updatedPrismaCategory = await this.prisma.category.update({
       where: { id },
-      data: { ...updateCategoryDto, userId },
+      data: {
+        ...updateCategoryDto,
+        budgetAmount: budgetAmountInCents,
+      },
     });
 
     return new Category(updatedPrismaCategory);
@@ -168,8 +159,8 @@ export class CategoriesService {
       getCategoriesSummary(userId),
     );
 
-    const result = summary as Array<{
-      totalBudget: bigint | null;
+    const result = summary as unknown as Array<{
+      totalBudget: bigint;
       totalSpent: bigint;
       totalIncome: bigint;
     }>;
@@ -177,10 +168,11 @@ export class CategoriesService {
 
     const { totalBudget, totalSpent, totalIncome } = result[0];
 
-    const totalBudgetNum = totalBudget ? Number(totalBudget) : 0;
-    const totalSpentNum = Number(totalSpent);
-    const totalIncomeNum = Number(totalIncome);
-    const remainingBudget = totalBudgetNum - totalSpentNum + totalIncomeNum;
+    const totalBudgetNum = bigintToMoneyString(totalBudget);
+    const totalSpentNum = bigintToMoneyString(totalSpent);
+    const remainingBudget = bigintToMoneyString(
+      totalBudget - totalSpent + totalIncome,
+    );
 
     return new CategoriesSummaryDto({
       totalBudget: totalBudgetNum,
