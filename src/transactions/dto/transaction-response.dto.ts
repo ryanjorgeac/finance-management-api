@@ -1,7 +1,7 @@
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { TransactionType } from '@prisma/client';
-import { centsTodollars } from 'src/common/utils/money';
+import { IsString } from 'class-validator';
 
 export class TransactionResponseDto {
   @ApiProperty({
@@ -14,11 +14,11 @@ export class TransactionResponseDto {
 
   @ApiProperty({
     description: 'Amount of the transaction in dollars',
-    example: 100.52,
+    example: '100.52',
   })
-  @Transform(centsTodollars)
+  @IsString()
   @Expose()
-  amount: number;
+  amount: string;
 
   @ApiProperty({
     description: 'Type of the transaction (INCOME or EXPENSE)',
