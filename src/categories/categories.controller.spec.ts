@@ -1,12 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
-import { CategoriesController } from './categories.controller';
-import { CategoriesService } from './categories.service';
-import { Category } from './entities/category.entity';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
-import { CategoryResponseDto } from './dto/category-response.dto';
-import { CategoriesSummaryDto } from './dto/categories-summary.dto';
+import { CategoriesController } from '@/categories/categories.controller';
+import { CategoriesService } from '@/categories/categories.service';
+import { Category } from '@/categories/entities/category.entity';
+import {
+  CreateCategoryDto,
+  UpdateCategoryDto,
+  CategoryResponseDto,
+  CategoriesSummaryDto,
+} from '@/categories/dto';
 
 describe('CategoriesController', () => {
   let controller: CategoriesController;
@@ -57,6 +59,9 @@ describe('CategoriesController', () => {
       const mockCategory = new Category({
         id: mockCategoryId,
         ...createCategoryDto,
+        budgetAmount: createCategoryDto.budgetAmount
+          ? BigInt(createCategoryDto.budgetAmount * 100)
+          : BigInt(0), // 500.00 in cents
         userId: mockUser.sub,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -83,9 +88,9 @@ describe('CategoriesController', () => {
           name: 'Category 1',
           description: 'Description 1',
           userId: mockUser.sub,
-          budgetAmount: 50000,
-          spentAmount: 25000,
-          incomeAmount: 5000,
+          budgetAmount: 50000n,
+          spentAmount: 25000n,
+          incomeAmount: 5000n,
           transactionCount: 10,
           isActive: true,
           createdAt: new Date(),
@@ -96,9 +101,9 @@ describe('CategoriesController', () => {
           name: 'Category 2',
           description: 'Description 2',
           userId: mockUser.sub,
-          budgetAmount: 30000,
-          spentAmount: 15000,
-          incomeAmount: 0,
+          budgetAmount: 30000n,
+          spentAmount: 15000n,
+          incomeAmount: 0n,
           transactionCount: 5,
           isActive: true,
           createdAt: new Date(),
@@ -130,9 +135,9 @@ describe('CategoriesController', () => {
   describe('getSummary', () => {
     it('should return CategoriesSummaryDto', async () => {
       const mockSummary = new CategoriesSummaryDto({
-        totalBudget: 100000, // 1000.00 in cents
-        totalSpent: 45000, // 450.00 in cents
-        remainingBudget: 70000, // 700.00 in cents
+        totalBudget: '1000',
+        totalSpent: '450',
+        remainingBudget: '700',
       });
 
       mockCategoriesService.getUserSummary.mockResolvedValue(mockSummary);
@@ -143,25 +148,25 @@ describe('CategoriesController', () => {
         mockUser.sub,
       );
       expect(result).toBeInstanceOf(CategoriesSummaryDto);
-      expect(result.totalBudget).toBe(100000);
-      expect(result.totalSpent).toBe(45000);
-      expect(result.remainingBudget).toBe(70000);
+      expect(result.totalBudget).toBe('1000.00');
+      expect(result.totalSpent).toBe('450.00');
+      expect(result.remainingBudget).toBe('700.00');
     });
 
     it('should handle zero values in summary', async () => {
       const mockSummary = new CategoriesSummaryDto({
-        totalBudget: 0,
-        totalSpent: 0,
-        remainingBudget: 0,
+        totalBudget: '0',
+        totalSpent: '0',
+        remainingBudget: '0',
       });
 
       mockCategoriesService.getUserSummary.mockResolvedValue(mockSummary);
 
       const result = await controller.getSummary(mockUser);
 
-      expect(result.totalBudget).toBe(0);
-      expect(result.totalSpent).toBe(0);
-      expect(result.remainingBudget).toBe(0);
+      expect(result.totalBudget).toBe('0.00');
+      expect(result.totalSpent).toBe('0.00');
+      expect(result.remainingBudget).toBe('0.00');
     });
   });
 
@@ -172,7 +177,7 @@ describe('CategoriesController', () => {
         name: 'Test Category',
         description: 'Test Description',
         userId: mockUser.sub,
-        budgetAmount: 50000,
+        budgetAmount: 50000n,
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -209,6 +214,9 @@ describe('CategoriesController', () => {
       const mockUpdatedCategory = new Category({
         id: mockCategoryId,
         ...updateCategoryDto,
+        budgetAmount: updateCategoryDto.budgetAmount
+          ? BigInt(updateCategoryDto.budgetAmount * 100)
+          : 0n,
         userId: mockUser.sub,
         isActive: true,
         createdAt: new Date(),

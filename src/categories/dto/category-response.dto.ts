@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose, Transform } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 import { IsString } from 'class-validator';
 import { Transaction } from '../../transactions/entities/transaction.entity';
 import { TransactionSummary } from '../../common/types/transaction-summary';

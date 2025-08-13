@@ -14,8 +14,8 @@ import {
   NotFoundException,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { CategoriesService } from './categories.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CategoriesService } from '@/categories/categories.service';
+import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import {
   ApiTags,
   ApiOperation,
@@ -24,15 +24,15 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { GetUser } from '../auth/decorators';
-import { ExceptionResponseDto } from '../exceptions/exception-response.dto';
+import { GetUser } from '@/auth/decorators';
+import { ExceptionResponseDto } from '@/exceptions/exception-response.dto';
 import {
   CategoriesSummaryDto,
   CreateCategoryDto,
   UpdateCategoryDto,
   CategoryResponseDto,
-} from './dto';
-import { fromEntities, fromEntity } from 'src/common/utils/category-mapper';
+} from '@/categories/dto';
+import { fromEntities, fromEntity } from '@/common/utils/category-mapper';
 
 @ApiTags('Categories')
 @ApiBearerAuth()
