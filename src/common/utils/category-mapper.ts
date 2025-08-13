@@ -1,6 +1,6 @@
-import { Category } from 'src/categories/entities/category.entity';
-import { CategoryResponseDto } from 'src/categories/dto';
-import { bigintToMoneyString } from './bigint-transform';
+import { Category } from '@/categories/entities/category.entity';
+import { CategoryResponseDto } from '@/categories/dto';
+import { bigintToMoneyString } from '@/common/utils/bigint-transform';
 
 export function fromEntity(category: Category): CategoryResponseDto {
   return new CategoryResponseDto({
