@@ -12,14 +12,12 @@
     "db:dev:logs": "docker compose logs -f dev-db",
     "db:dev:exec": "docker compose exec dev-db psql -U postgres",
     "db:dev:restart": "npm run db:dev:rm && npm run db:dev:up && sleep 1 && npx prisma migrate deploy",
-
     "prisma:test:deploy": "dotenv -e .env.test -- npx prisma migrate deploy",
     "db:test:rm": "docker compose rm test-db -s -f -v",
     "db:test:up": "docker compose up -d test-db",
     "db:test:logs": "docker compose logs -f test-db",
     "db:test:exec": "docker compose exec test-db psql -U postgres",
     "db:test:restart": "npm run db:test:rm && npm run db:test:up && sleep 2 && npm run prisma:test:deploy",
-
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -55,7 +53,8 @@
     "pg": "^8.13.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.21"
+    "typeorm": "^0.3.21",
+    "zod": "^4.0.14"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -96,6 +95,9 @@
       "json",
       "ts"
     ],
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/$1"
+    },
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
@@ -104,7 +106,8 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "coverageDirectory": "coverage",
+    "testEnvironment": "node",
+    "clearMocks": true
   }
 }

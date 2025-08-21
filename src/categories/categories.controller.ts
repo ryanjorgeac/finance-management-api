@@ -14,11 +14,8 @@ import {
   NotFoundException,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { CategoriesService } from './categories.service';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
-import { CategoryResponseDto } from './dto/category-response.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CategoriesService } from '@/categories/categories.service';
+import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import {
   ApiTags,
   ApiOperation,
@@ -27,8 +24,15 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { GetUser } from 'src/auth/decorators';
-import { ExceptionResponseDto } from 'src/exceptions/exception-response.dto';
+import { GetUser } from '@/auth/decorators';
+import { ExceptionResponseDto } from '@/exceptions/exception-response.dto';
+import {
+  CategoriesSummaryDto,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+  CategoryResponseDto,
+} from '@/categories/dto';
+import { fromEntities, fromEntity } from '@/common/utils/category-mapper';
 
 @ApiTags('Categories')
 @ApiBearerAuth()
@@ -64,7 +68,7 @@ export class CategoriesController {
       user.sub,
       createCategoryDto,
     );
-    return new CategoryResponseDto(category);
+    return fromEntity(category);
   }
 
   @Get()
@@ -79,7 +83,21 @@ export class CategoriesController {
     @GetUser() user: { sub: string },
   ): Promise<CategoryResponseDto[]> {
     const categories = await this.categoriesService.findAll(user.sub);
-    return categories.map((category) => new CategoryResponseDto(category));
+    return fromEntities(categories);
+  }
+
+  @Get('summary')
+  @ApiOperation({ summary: 'Get financial summary across all user categories' })
+  @ApiResponse({
+    status: 200,
+    description: 'Categories summary retrieved successfully',
+    type: CategoriesSummaryDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getSummary(
+    @GetUser() user: { sub: string },
+  ): Promise<CategoriesSummaryDto> {
+    return await this.categoriesService.getUserSummary(user.sub);
   }
 
   @Get(':id')
@@ -113,7 +131,7 @@ export class CategoriesController {
     if (!category) {
       throw new NotFoundException(`Category with ID ${id} not found`);
     }
-    return new CategoryResponseDto(category);
+    return fromEntity(category);
   }
 
   @Patch(':id')
@@ -155,7 +173,7 @@ export class CategoriesController {
       user.sub,
       updateCategoryDto,
     );
-    return new CategoryResponseDto(category);
+    return fromEntity(category);
   }
 
   @Delete(':id')
