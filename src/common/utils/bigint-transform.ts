@@ -26,8 +26,3 @@ export const centsTodollars = ({ value }: { value: bigint }): bigint => {
 export const dollarsToCents = (dollars: bigint | number): bigint => {
   return BigInt(dollars) * 100n;
 };
-
-export const formatCurrency = (cents: bigint, currencySymbol = '$'): string => {
-  const dollars = cents / 100n;
-  return `${dollars.toString()}.${(cents % 100n).toString().padStart(2, '0')}`;
-};
