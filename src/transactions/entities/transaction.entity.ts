@@ -4,7 +4,7 @@ import { TransactionType } from '@prisma/client';
 
 export class Transaction {
   id: string;
-  amount: number;
+  amount: bigint;
   type: TransactionType;
   description: string;
   date: Date;
@@ -17,14 +17,30 @@ export class Transaction {
 
   constructor(partial: Partial<Transaction>) {
     Object.assign(this, partial);
+
+    if (partial.amount !== undefined) {
+      this.amount = this.convertToBigInt(partial.amount);
+    }
+  }
+
+  private convertToBigInt(value: any): bigint {
+    if (value === null || value === undefined) return 0n;
+    if (typeof value === 'bigint') return value;
+    if (typeof value === 'number') return BigInt(value);
+    if (typeof value === 'string') return BigInt(value);
+    return BigInt(String(value));
   }
 
   getPrecisedAmount(): number {
-    return this.amount / 100;
+    return Number(this.amount) / 100;
   }
 
-  getBalanceImpact(): number {
+  getBalanceImpact(): bigint {
     return this.type === TransactionType.INCOME ? this.amount : -this.amount;
+  }
+
+  getBalanceImpactInDollars(): number {
+    return Number(this.getBalanceImpact()) / 100;
   }
 
   isExpense(): boolean {

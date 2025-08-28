@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["typedSql"]
 }
 
 datasource db {
@@ -28,7 +29,7 @@ model Category {
   description  String?
   color        String?
   icon         String?
-  budgetAmount Int?
+  budgetAmount BigInt           @default(0)
   userId       String
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
@@ -41,14 +42,14 @@ model Category {
 
 model Transaction {
   id            String   @id @default(uuid())
-  amount        Int
+  amount        BigInt
   type          TransactionType
   description   String
   date          DateTime
   userId        String
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   categoryId    String
-  category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category      Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

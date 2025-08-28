@@ -3,10 +3,34 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { z } from 'zod';
+import { getCategoriesSummary, getUserCategories } from '@prisma/client/sql';
 import { PrismaService } from '../database/prisma.service';
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { CategoriesSummaryDto } from './dto/categories-summary.dto';
+import {
+  bigintToMoneyString,
+  dollarsToCents,
+} from '../common/utils/bigint-transform';
+
+const RawCategoryData = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  color: z.string(),
+  icon: z.string(),
+  budgetAmount: z.bigint(),
+  isActive: z.boolean(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  spentAmount: z.bigint(),
+  incomeAmount: z.bigint(),
+  transactionCount: z.number(),
+});
+
+const CategoriesSummaryArraySchema = z.array(RawCategoryData);
 
 @Injectable()
 export class CategoriesService {
@@ -16,9 +40,14 @@ export class CategoriesService {
     userId: string,
     createCategoryDto: CreateCategoryDto,
   ): Promise<Category> {
+    const budgetAmountInCents: bigint = createCategoryDto.budgetAmount
+      ? dollarsToCents(createCategoryDto.budgetAmount)
+      : 0n;
+
     const prismaCategory = await this.prisma.category.create({
       data: {
         ...createCategoryDto,
+        budgetAmount: budgetAmountInCents,
         userId,
       },
     });
@@ -27,25 +56,16 @@ export class CategoriesService {
   }
 
   async findAll(userId: string): Promise<Category[]> {
-    const prismaCategories = await this.prisma.category.findMany({
-      where: {
-        userId,
-      },
-      orderBy: { name: 'asc' },
-      include: {
-        transactions: {
-          select: {
-            amount: true,
-            type: true,
-            date: true,
-          },
-          orderBy: { date: 'desc' },
-        },
-      },
-    });
+    const categoriesWithSummary = await this.prisma.$queryRawTyped(
+      getUserCategories(userId),
+    );
 
-    return prismaCategories.map((categoryData) => {
-      return new Category(categoryData);
+    const validateResults = CategoriesSummaryArraySchema.parse(
+      categoriesWithSummary,
+    );
+
+    return validateResults.map((data) => {
+      return new Category(data);
     });
   }
 
@@ -73,9 +93,17 @@ export class CategoriesService {
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<Category> {
     await this.findOne(id, userId);
+
+    const budgetAmountInCents = updateCategoryDto.budgetAmount
+      ? dollarsToCents(updateCategoryDto.budgetAmount)
+      : undefined;
+
     const updatedPrismaCategory = await this.prisma.category.update({
       where: { id },
-      data: updateCategoryDto,
+      data: {
+        ...updateCategoryDto,
+        budgetAmount: budgetAmountInCents,
+      },
     });
 
     return new Category(updatedPrismaCategory);
@@ -123,6 +151,33 @@ export class CategoriesService {
     }
     await this.prisma.category.delete({
       where: { id },
+    });
+  }
+
+  async getUserSummary(userId: string): Promise<CategoriesSummaryDto> {
+    const summary = await this.prisma.$queryRawTyped(
+      getCategoriesSummary(userId),
+    );
+
+    const result = summary as unknown as Array<{
+      totalBudget: bigint;
+      totalSpent: bigint;
+      totalIncome: bigint;
+    }>;
+    // AND c."isActive" = true -> This condition ensures we only consider active categories but in the future we might want to calculate the user balance including inactive categories as well.
+
+    const { totalBudget, totalSpent, totalIncome } = result[0];
+
+    const totalBudgetNum = bigintToMoneyString(totalBudget);
+    const totalSpentNum = bigintToMoneyString(totalSpent);
+    const remainingBudget = bigintToMoneyString(
+      totalBudget - totalSpent + totalIncome,
+    );
+
+    return new CategoriesSummaryDto({
+      totalBudget: totalBudgetNum,
+      totalSpent: totalSpentNum,
+      remainingBudget,
     });
   }
 }

@@ -11,6 +11,9 @@ import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
 import { TransactionQueryCondition } from 'src/common/types/transaction-query-condition';
 import { TransactionResponseDto } from './dto';
+import { dollarsToCents } from '@/common/utils/bigint-transform';
+import { fromEntity, toEntity } from '@/common/utils/transaction-mapper';
+import { TransactionWithCategory } from './types/transaction-with-category.type';
 
 @Injectable()
 export class TransactionsService {
@@ -36,7 +39,7 @@ export class TransactionsService {
       );
     }
 
-    const amountInCents = Math.round(createTransactionDto.amount * 100);
+    const amountInCents = dollarsToCents(createTransactionDto.amount);
 
     return this.prisma.$transaction(async (prismaClient) => {
       const prismaTransaction = await prismaClient.transaction.create({
@@ -106,20 +109,21 @@ export class TransactionsService {
       this.prisma.transaction.count({ where }),
     ]);
 
-    const transactions = prismaTransactions.map(
-      (t) => new TransactionResponseDto(t),
+    const transactions = prismaTransactions.map((t) =>
+      fromEntity(new Transaction(t)),
     );
 
     return { transactions, total, page, limit };
   }
 
-  async findOne(id: string, userId: string): Promise<TransactionResponseDto> {
-    const prismaTransaction = await this.prisma.transaction.findUnique({
-      where: { id },
-      include: {
-        category: true,
-      },
-    });
+  async findOne(id: string, userId: string): Promise<Transaction> {
+    const prismaTransaction: TransactionWithCategory | null =
+      await this.prisma.transaction.findUnique({
+        where: { id },
+        include: {
+          category: true,
+        },
+      });
 
     if (!prismaTransaction) {
       throw new NotFoundException(`Transaction with ID ${id} not found`);
@@ -130,14 +134,14 @@ export class TransactionsService {
         'You do not have permission to access this transaction',
       );
     }
-    return new TransactionResponseDto(prismaTransaction);
+    return toEntity(prismaTransaction);
   }
 
   async update(
     id: string,
     userId: string,
     updateTransactionDto: UpdateTransactionDto,
-  ): Promise<TransactionResponseDto> {
+  ): Promise<Transaction> {
     const existingTransaction = await this.findOne(id, userId);
     if (
       updateTransactionDto.categoryId &&
@@ -161,15 +165,16 @@ export class TransactionsService {
     }
 
     return this.prisma.$transaction(async (prismaClient) => {
-      const updatedPrismaTransaction = await prismaClient.transaction.update({
-        where: { id },
-        data: updateTransactionDto,
-        include: {
-          category: true,
-        },
-      });
+      const updatedPrismaTransaction: TransactionWithCategory =
+        await prismaClient.transaction.update({
+          where: { id },
+          data: updateTransactionDto,
+          include: {
+            category: true,
+          },
+        });
 
-      return new TransactionResponseDto(updatedPrismaTransaction);
+      return toEntity(updatedPrismaTransaction);
     });
   }
 

@@ -32,6 +32,7 @@ import {
 import { GetUser } from 'src/auth/decorators';
 import { ExceptionResponseDto } from 'src/exceptions/exception-response.dto';
 import { PaginatedTransactionsResponseDto } from './dto/paginated-transactions-response.dto';
+import { fromEntity } from '@/common/utils/transaction-mapper';
 
 @ApiTags('Transactions')
 @ApiBearerAuth()
@@ -72,7 +73,7 @@ export class TransactionsController {
       user.sub,
       createTransactionDto,
     );
-    return new TransactionResponseDto(transaction);
+    return fromEntity(transaction);
   }
 
   @Get()
@@ -132,7 +133,7 @@ export class TransactionsController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<TransactionResponseDto> {
     const transaction = await this.transactionsService.findOne(id, user.sub);
-    return new TransactionResponseDto(transaction);
+    return fromEntity(transaction);
   }
 
   @Patch(':id')
@@ -174,7 +175,7 @@ export class TransactionsController {
       user.sub,
       updateTransactionDto,
     );
-    return new TransactionResponseDto(transaction);
+    return fromEntity(transaction);
   }
 
   @Delete(':id')
