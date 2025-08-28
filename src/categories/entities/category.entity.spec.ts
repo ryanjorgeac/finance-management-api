@@ -5,21 +5,21 @@ import { Transaction } from '../../transactions/entities/transaction.entity';
 describe('Category Entity', () => {
   describe('constructor', () => {
     it('should create category with all properties', () => {
-      const categoryData = {
+      const categoryData: Partial<Category> = {
         id: 'category-123',
         name: 'Test Category',
         description: 'Test Description',
         color: '#FF5733',
         icon: 'test-icon',
-        budgetAmount: 50000, // 500.00 in cents
+        budgetAmount: 50000n, // 500.00 in cents
         userId: 'user-123',
         user: new User({ id: 'user-123' }),
         transactions: [new Transaction({ id: 't-1234' })],
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
-        spentAmount: 25000, // 250.00 in cents
-        incomeAmount: 5000, // 50.00 in cents
+        spentAmount: 25000n, // 250.00 in cents
+        incomeAmount: 5000n, // 50.00 in cents
         transactionCount: 1,
       };
 
@@ -27,15 +27,15 @@ describe('Category Entity', () => {
 
       expect(category.id).toBe(categoryData.id);
       expect(category.name).toBe(categoryData.name);
-      expect(category.spentAmount).toBe(25000);
-      expect(category.incomeAmount).toBe(5000);
+      expect(category.spentAmount).toBe(25000n);
+      expect(category.incomeAmount).toBe(5000n);
       expect(category.transactionCount).toBe(1);
-      expect(category.budgetAmount).toBe(50000);
+      expect(category.budgetAmount).toBe(50000n);
     });
 
     it('should handle BigInt values from database queries', () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const categoryData = {
+      const categoryData: Partial<Category> = {
         id: 'category-123',
         name: 'Test Category',
         budgetAmount: BigInt(50000),
@@ -50,15 +50,15 @@ describe('Category Entity', () => {
 
       const category = new Category(categoryData);
 
-      expect(category.spentAmount).toBe(25000);
-      expect(category.incomeAmount).toBe(5000);
-      expect(category.transactionCount).toBe(10);
-      expect(category.budgetAmount).toBe(50000);
+      expect(category.spentAmount).toBe(25000n);
+      expect(category.incomeAmount).toBe(5000n);
+      expect(category.transactionCount).toBe(10n);
+      expect(category.budgetAmount).toBe(50000n);
     });
 
     it('should handle null and undefined values', () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const categoryData = {
+      const categoryData: Partial<Category> = {
         id: 'category-123',
         name: 'Test Category',
         budgetAmount: null,
@@ -129,44 +129,6 @@ describe('Category Entity', () => {
       const remaining = category.getRemainingAmount();
 
       expect(remaining).toBe(0);
-    });
-  });
-
-  describe('convertToNumber', () => {
-    it('should convert BigInt to number', () => {
-      const category = new Category({});
-      const result = category['convertToNumber'](BigInt(12345));
-
-      expect(result).toBe(12345);
-      expect(typeof result).toBe('number');
-    });
-
-    it('should return number as is', () => {
-      const category = new Category({});
-      const result = category['convertToNumber'](12345);
-
-      expect(result).toBe(12345);
-    });
-
-    it('should return null for null input', () => {
-      const category = new Category({});
-      const result = category['convertToNumber'](null);
-
-      expect(result).toBeNull();
-    });
-
-    it('should return null for undefined input', () => {
-      const category = new Category({});
-      const result = category['convertToNumber'](undefined);
-
-      expect(result).toBeNull();
-    });
-
-    it('should convert string numbers to number', () => {
-      const category = new Category({});
-      const result = category['convertToNumber']('12345');
-
-      expect(result).toBe(12345);
     });
   });
 });
