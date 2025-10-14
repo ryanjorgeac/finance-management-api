@@ -5,7 +5,7 @@ import { IsString } from 'class-validator';
 export class CategoriesSummaryDto {
   @ApiProperty({
     description: 'Total budget across all categories',
-    example: '650.00',
+    example: '650,00',
   })
   @Expose()
   @IsString()
@@ -13,7 +13,7 @@ export class CategoriesSummaryDto {
 
   @ApiProperty({
     description: 'Total amount spent across all categories',
-    example: '446.25',
+    example: '446,25',
   })
   @Expose()
   @IsString()
@@ -21,16 +21,10 @@ export class CategoriesSummaryDto {
 
   @ApiProperty({
     description: 'Remaining budget across all categories',
-    example: '203.75',
+    example: '203,75',
   })
   @Expose()
   @IsString()
-  @Transform(({ value }: { value: string }) => {
-    if (value.includes('.')) {
-      return value;
-    }
-    return `${value}.00`;
-  })
   remainingBudget: string;
 
   constructor(partial: Partial<CategoriesSummaryDto>) {
