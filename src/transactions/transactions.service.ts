@@ -11,7 +11,7 @@ import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
 import { TransactionQueryCondition } from 'src/common/types/transaction-query-condition';
 import { TransactionResponseDto } from './dto';
-import { dollarsToCents } from '@/common/utils/bigint-transform';
+import { reaisToCents } from '@/common/utils/bigint-transform';
 import { fromEntity, toEntity } from '@/common/utils/transaction-mapper';
 import { TransactionWithCategory } from './types/transaction-with-category.type';
 
@@ -39,7 +39,7 @@ export class TransactionsService {
       );
     }
 
-    const amountInCents = dollarsToCents(createTransactionDto.amount);
+    const amountInCents = reaisToCents(createTransactionDto.amount);
 
     return this.prisma.$transaction(async (prismaClient) => {
       const prismaTransaction = await prismaClient.transaction.create({

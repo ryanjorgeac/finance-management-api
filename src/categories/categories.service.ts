@@ -12,7 +12,8 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CategoriesSummaryDto } from './dto/categories-summary.dto';
 import {
   bigintToMoneyString,
-  dollarsToCents,
+  reaisToCents,
+  centsToBigInt,
 } from '../common/utils/bigint-transform';
 
 const RawCategoryData = z.object({
@@ -41,7 +42,7 @@ export class CategoriesService {
     createCategoryDto: CreateCategoryDto,
   ): Promise<Category> {
     const budgetAmountInCents: bigint = createCategoryDto.budgetAmount
-      ? dollarsToCents(createCategoryDto.budgetAmount)
+      ? centsToBigInt(createCategoryDto.budgetAmount)
       : 0n;
 
     const prismaCategory = await this.prisma.category.create({
@@ -51,7 +52,6 @@ export class CategoriesService {
         userId,
       },
     });
-
     return new Category(prismaCategory);
   }
 
@@ -95,7 +95,7 @@ export class CategoriesService {
     await this.findOne(id, userId);
 
     const budgetAmountInCents = updateCategoryDto.budgetAmount
-      ? dollarsToCents(updateCategoryDto.budgetAmount)
+      ? reaisToCents(updateCategoryDto.budgetAmount)
       : undefined;
 
     const updatedPrismaCategory = await this.prisma.category.update({
