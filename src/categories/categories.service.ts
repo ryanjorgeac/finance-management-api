@@ -16,7 +16,6 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CategoriesSummaryDto } from './dto/categories-summary.dto';
 import {
   bigintToMoneyString,
-  reaisToCents,
   centsToBigInt,
 } from '../common/utils/bigint-transform';
 
@@ -99,9 +98,10 @@ export class CategoriesService {
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<Category> {
     await this.findOne(id, userId);
+    this.logger.log(`Updating category ${id}`);
 
     const budgetAmountInCents = updateCategoryDto.budgetAmount
-      ? reaisToCents(updateCategoryDto.budgetAmount)
+      ? centsToBigInt(updateCategoryDto.budgetAmount)
       : undefined;
 
     const updatedPrismaCategory = await this.prisma.category.update({
@@ -150,9 +150,8 @@ export class CategoriesService {
           updatedAt: new Date(),
         },
       });
-
-      console.log(
-        `Moved ${transactionsCount} transactions to "Deleted category"`,
+      this.logger.log(
+        `Reassigned ${transactionsCount} transactions from category ${id} to default category ${defaultCategory.id}`,
       );
     }
     await this.prisma.category.delete({
@@ -180,10 +179,6 @@ export class CategoriesService {
       totalIncome: bigint;
       remainingBudget: bigint;
     };
-
-    this.logger.debug(
-      `Summary for user ${userId}: Budget=${result.totalBudget}, Spent=${result.totalSpent}, Income=${result.totalIncome}, Remaining=${result.remainingBudget}`,
-    );
 
     const totalBudgetStr = bigintToMoneyString(result.totalBudget);
     const totalSpentStr = bigintToMoneyString(result.totalSpent);
