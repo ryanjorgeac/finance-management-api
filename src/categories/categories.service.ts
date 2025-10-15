@@ -2,9 +2,13 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { z } from 'zod';
-import { getCategoriesSummary, getUserCategories } from '@prisma/client/sql';
+import {
+  getCategoriesSummaryQuery,
+  getUserCategoriesQuery,
+} from '../queries/category.queries';
 import { PrismaService } from '../database/prisma.service';
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -37,6 +41,8 @@ const CategoriesSummaryArraySchema = z.array(RawCategoryData);
 export class CategoriesService {
   constructor(private prisma: PrismaService) {}
 
+  private readonly logger = new Logger(CategoriesService.name);
+
   async create(
     userId: string,
     createCategoryDto: CreateCategoryDto,
@@ -56,8 +62,8 @@ export class CategoriesService {
   }
 
   async findAll(userId: string): Promise<Category[]> {
-    const categoriesWithSummary = await this.prisma.$queryRawTyped(
-      getUserCategories(userId),
+    const categoriesWithSummary = await this.prisma.$queryRaw(
+      getUserCategoriesQuery(userId),
     );
 
     const validateResults = CategoriesSummaryArraySchema.parse(
@@ -155,29 +161,40 @@ export class CategoriesService {
   }
 
   async getUserSummary(userId: string): Promise<CategoriesSummaryDto> {
-    const summary = await this.prisma.$queryRawTyped(
-      getCategoriesSummary(userId),
+    const summary = await this.prisma.$queryRaw(
+      getCategoriesSummaryQuery(userId),
     );
 
-    const result = summary as unknown as Array<{
+    if (!summary) {
+      this.logger.log(`No summary data found for user ${userId}`);
+      return new CategoriesSummaryDto({
+        totalBudget: '0,00',
+        totalSpent: '0,00',
+        remainingBudget: '0,00',
+      });
+    }
+
+    const result = summary[0] as unknown as {
       totalBudget: bigint;
       totalSpent: bigint;
       totalIncome: bigint;
-    }>;
-    // AND c."isActive" = true -> This condition ensures we only consider active categories but in the future we might want to calculate the user balance including inactive categories as well.
+      remainingBudget: bigint;
+    };
 
-    const { totalBudget, totalSpent, totalIncome } = result[0];
-
-    const totalBudgetNum = bigintToMoneyString(totalBudget);
-    const totalSpentNum = bigintToMoneyString(totalSpent);
-    const remainingBudget = bigintToMoneyString(
-      totalBudget - totalSpent + totalIncome,
+    this.logger.debug(
+      `Summary for user ${userId}: Budget=${result.totalBudget}, Spent=${result.totalSpent}, Income=${result.totalIncome}, Remaining=${result.remainingBudget}`,
     );
 
+    const totalBudgetStr = bigintToMoneyString(result.totalBudget);
+    const totalSpentStr = bigintToMoneyString(result.totalSpent);
+    const remainingBudgetStr = bigintToMoneyString(result.remainingBudget);
+
+    this.logger.log(`User ${userId} summary retrieved successfully`);
+
     return new CategoriesSummaryDto({
-      totalBudget: totalBudgetNum,
-      totalSpent: totalSpentNum,
-      remainingBudget,
+      totalBudget: totalBudgetStr,
+      totalSpent: totalSpentStr,
+      remainingBudget: remainingBudgetStr,
     });
   }
 }
