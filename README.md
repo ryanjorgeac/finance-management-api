@@ -67,6 +67,13 @@ $ npm run start:prod
 # unit tests
 $ npm run test
 
+# All category tests, for example
+$ npm test -- --testPathPattern=categories
+
+# Specific tests
+$ npm test -- categories.service.spec
+$ npm test -- categories.controller.spec
+
 # e2e tests
 $ npm run test:e2e
 
