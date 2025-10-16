@@ -24,11 +24,12 @@ describe('CategoriesService', () => {
       count: jest.fn(),
       updateMany: jest.fn(),
     },
-    $queryRawTyped: jest.fn(),
+    $queryRaw: jest.fn(),
   };
 
   const mockUserId = 'user-123';
   const mockCategoryId = 'category-123';
+  const mockDate = new Date('2025-10-15T00:00:00.000Z');
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -63,9 +64,10 @@ describe('CategoriesService', () => {
       const mockCreatedCategory = {
         id: mockCategoryId,
         ...createCategoryDto,
+        budgetAmount: 500n,
         userId: mockUserId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: mockDate,
+        updatedAt: mockDate,
       };
 
       mockPrismaService.category.create.mockResolvedValue(mockCreatedCategory);
@@ -75,7 +77,7 @@ describe('CategoriesService', () => {
       expect(mockPrismaService.category.create).toHaveBeenCalledWith({
         data: {
           ...createCategoryDto,
-          budgetAmount: 50000n, // Converted to cents (500 * 100)
+          budgetAmount: 500n,
           userId: mockUserId,
         },
       });
@@ -93,12 +95,12 @@ describe('CategoriesService', () => {
           description: 'Description 1',
           color: '#FF5733',
           icon: 'icon-1',
-          budgetAmount: BigInt(50000), // 500.00 in cents
+          budgetAmount: BigInt(50000),
           isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          spentAmount: BigInt(25000), // 250.00 in cents
-          incomeAmount: BigInt(5000), // 50.00 in cents
+          createdAt: mockDate,
+          updatedAt: mockDate,
+          spentAmount: BigInt(25000),
+          incomeAmount: BigInt(5000),
           transactionCount: 10,
         },
         {
@@ -107,28 +109,59 @@ describe('CategoriesService', () => {
           description: 'Description 2',
           color: '#33FF57',
           icon: 'icon-2',
-          budgetAmount: BigInt(30000), // 300.00 in cents
+          budgetAmount: BigInt(30000),
           isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          spentAmount: BigInt(15000), // 150.00 in cents
+          createdAt: mockDate,
+          updatedAt: mockDate,
+          spentAmount: BigInt(15000),
           incomeAmount: BigInt(0),
           transactionCount: 5,
         },
       ];
 
-      mockPrismaService.$queryRawTyped.mockResolvedValue(
-        mockCategoriesWithSummary,
-      );
+      mockPrismaService.$queryRaw.mockResolvedValue(mockCategoriesWithSummary);
 
       const result = await service.findAll(mockUserId);
 
-      expect(mockPrismaService.$queryRawTyped).toHaveBeenCalledTimes(1);
+      expect(mockPrismaService.$queryRaw).toHaveBeenCalledTimes(1);
       expect(result).toHaveLength(2);
       expect(result[0]).toBeInstanceOf(Category);
       expect(result[0].name).toBe('Category 1');
       expect(result[0].spentAmount).toBe(25000n);
       expect(result[1].name).toBe('Category 2');
+    });
+
+    it('should return empty array when user has no categories', async () => {
+      mockPrismaService.$queryRaw.mockResolvedValue([]);
+
+      const result = await service.findAll(mockUserId);
+
+      expect(result).toEqual([]);
+      expect(mockPrismaService.$queryRaw).toHaveBeenCalledTimes(1);
+    });
+
+    it('should calculate remaining amount correctly for each category', async () => {
+      const mockCategories = [
+        {
+          id: 'category-1',
+          name: 'Test Category',
+          description: 'Test',
+          color: '#FF5733',
+          icon: 'test',
+          budgetAmount: 50000n,
+          isActive: true,
+          createdAt: mockDate,
+          updatedAt: mockDate,
+          spentAmount: 35000n,
+          incomeAmount: 5000n,
+          transactionCount: 5,
+        },
+      ];
+
+      mockPrismaService.$queryRaw.mockResolvedValue(mockCategories);
+      const result = await service.findAll(mockUserId);
+      const expectedRemaining = 50000n - 35000n + 5000n;
+      expect(result[0].remainingAmount).toBe(expectedRemaining);
     });
   });
 
@@ -141,8 +174,8 @@ describe('CategoriesService', () => {
         userId: mockUserId,
         budgetAmount: 50000,
         isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: mockDate,
+        updatedAt: mockDate,
       };
 
       mockPrismaService.category.findUnique.mockResolvedValue(mockCategory);
@@ -171,8 +204,8 @@ describe('CategoriesService', () => {
         userId: 'other-user',
         budgetAmount: 50000,
         isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: mockDate,
+        updatedAt: mockDate,
       };
 
       mockPrismaService.category.findUnique.mockResolvedValue(mockCategory);
@@ -187,56 +220,80 @@ describe('CategoriesService', () => {
     it('should return financial summary for user categories', async () => {
       const mockSummaryResult = [
         {
-          totalBudget: BigInt(100000), // 1000.00 in cents
-          totalSpent: BigInt(45000), // 450.00 in cents
-          totalIncome: BigInt(15000), // 150.00 in cents
-        },
-      ];
-
-      mockPrismaService.$queryRawTyped.mockResolvedValue(mockSummaryResult);
-
-      const result = await service.getUserSummary(mockUserId);
-
-      expect(mockPrismaService.$queryRawTyped).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(CategoriesSummaryDto);
-      expect(result.totalBudget).toBe('1000.00');
-      expect(result.totalSpent).toBe('450.00');
-      expect(result.remainingBudget).toBe('700.00'); // 1000.00 - 450.00 + 150.00
-    });
-
-    it('should handle zero totalBudget', async () => {
-      const mockSummaryResult = [
-        {
-          totalBudget: 0n,
+          totalBudget: BigInt(100000),
           totalSpent: BigInt(45000),
           totalIncome: BigInt(15000),
+          remainingBudget: BigInt(70000),
         },
       ];
 
-      mockPrismaService.$queryRawTyped.mockResolvedValue(mockSummaryResult);
+      mockPrismaService.$queryRaw.mockResolvedValue(mockSummaryResult);
 
       const result = await service.getUserSummary(mockUserId);
 
-      expect(result.totalBudget).toBe('0.00');
-      expect(result.remainingBudget).toBe('-300.00'); // 0 - 45000 + 15000
+      expect(mockPrismaService.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(result).toBeInstanceOf(CategoriesSummaryDto);
+      expect(result.totalBudget).toBe('1.000,00');
+      expect(result.totalSpent).toBe('450,00');
+      expect(result.remainingBudget).toBe('700,00');
     });
 
-    it('should handle zero values', async () => {
+    it('should return zero values when no summary data exists', async () => {
+      mockPrismaService.$queryRaw.mockResolvedValue(null);
+
+      const result = await service.getUserSummary(mockUserId);
+
+      expect(result.totalBudget).toBe('0,00');
+      expect(result.totalSpent).toBe('0,00');
+      expect(result.remainingBudget).toBe('0,00');
+    });
+
+    it('should return DTO with zero values when summary array is empty', async () => {
+      mockPrismaService.$queryRaw.mockResolvedValue([]);
+
+      const dto = await service.getUserSummary(mockUserId);
+
+      expect(dto.totalBudget).toBe('0,00');
+      expect(dto.totalSpent).toBe('0,00');
+      expect(dto.remainingBudget).toBe('0,00');
+    });
+
+    it('should handle zero bigint values correctly', async () => {
       const mockSummaryResult = [
         {
           totalBudget: BigInt(0),
           totalSpent: BigInt(0),
           totalIncome: BigInt(0),
+          remainingBudget: BigInt(0),
         },
       ];
 
-      mockPrismaService.$queryRawTyped.mockResolvedValue(mockSummaryResult);
+      mockPrismaService.$queryRaw.mockResolvedValue(mockSummaryResult);
 
       const result = await service.getUserSummary(mockUserId);
 
-      expect(result.totalBudget).toBe('0.00');
-      expect(result.totalSpent).toBe('0.00');
-      expect(result.remainingBudget).toBe('0.00');
+      expect(result.totalBudget).toBe('0,00');
+      expect(result.totalSpent).toBe('0,00');
+      expect(result.remainingBudget).toBe('0,00');
+    });
+
+    it('should handle negative remaining budget', async () => {
+      const mockSummaryResult = [
+        {
+          totalBudget: BigInt(50000),
+          totalSpent: BigInt(75000),
+          totalIncome: BigInt(0),
+          remainingBudget: BigInt(-25000),
+        },
+      ];
+
+      mockPrismaService.$queryRaw.mockResolvedValue(mockSummaryResult);
+
+      const result = await service.getUserSummary(mockUserId);
+
+      expect(result.totalBudget).toBe('500,00');
+      expect(result.totalSpent).toBe('750,00');
+      expect(result.remainingBudget).toBe('-250,00');
     });
   });
 
@@ -251,15 +308,16 @@ describe('CategoriesService', () => {
         id: mockCategoryId,
         name: 'Original Category',
         userId: mockUserId,
-        budgetAmount: 50000,
+        budgetAmount: 50000n,
         isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: mockDate,
+        updatedAt: mockDate,
       };
 
       const mockUpdatedCategory = {
         ...mockExistingCategory,
-        ...updateCategoryDto,
+        name: updateCategoryDto.name,
+        budgetAmount: 750n,
       };
 
       mockPrismaService.category.findUnique.mockResolvedValue(
@@ -277,7 +335,7 @@ describe('CategoriesService', () => {
         where: { id: mockCategoryId },
         data: {
           name: 'Updated Category',
-          budgetAmount: 75000n, // Converted to cents (750 * 100)
+          budgetAmount: 750n,
         },
       });
       expect(result).toBeInstanceOf(Category);
@@ -293,8 +351,8 @@ describe('CategoriesService', () => {
         userId: mockUserId,
         budgetAmount: 50000,
         isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: mockDate,
+        updatedAt: mockDate,
       };
 
       mockPrismaService.category.findUnique.mockResolvedValue(mockCategory);
@@ -318,8 +376,8 @@ describe('CategoriesService', () => {
         userId: mockUserId,
         budgetAmount: 50000,
         isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: mockDate,
+        updatedAt: mockDate,
       };
 
       const mockDefaultCategory = {
@@ -328,8 +386,8 @@ describe('CategoriesService', () => {
         userId: mockUserId,
         budgetAmount: 0,
         isActive: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: mockDate,
+        updatedAt: mockDate,
       };
 
       mockPrismaService.category.findUnique.mockResolvedValue(mockCategory);

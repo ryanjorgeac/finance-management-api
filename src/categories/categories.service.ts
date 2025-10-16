@@ -160,11 +160,11 @@ export class CategoriesService {
   }
 
   async getUserSummary(userId: string): Promise<CategoriesSummaryDto> {
-    const summary = await this.prisma.$queryRaw(
+    const summary = await this.prisma.$queryRaw<Array<bigint>>(
       getCategoriesSummaryQuery(userId),
     );
 
-    if (!summary) {
+    if (!summary || summary.length === 0) {
       this.logger.log(`No summary data found for user ${userId}`);
       return new CategoriesSummaryDto({
         totalBudget: '0,00',
