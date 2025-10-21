@@ -9,6 +9,7 @@ import { CategoriesSummaryDto } from './dto/categories-summary.dto';
 
 describe('CategoriesService', () => {
   let service: CategoriesService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let prismaService: PrismaService;
 
   const mockPrismaService = {
