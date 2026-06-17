@@ -3,23 +3,21 @@ import {
   IsString,
   IsUUID,
   IsDate,
-  IsNumber,
+  IsInt,
   Min,
 } from 'class-validator';
 import { TransactionType } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
 
 export class CreateTransactionDto {
   @ApiProperty({
-    description: 'Amount Decimal of the transaction',
-    example: 10.59,
+    description: 'Amount of the transaction in cents',
+    example: 1059,
   })
   @IsNotEmpty()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0.01)
-  @Transform(({ value }) => Number(value))
-  amount: number;
+  @IsInt()
+  @Min(1)
+  amountCents: number;
 
   @ApiProperty({
     description: 'Type of the transaction (INCOME or EXPENSE)',

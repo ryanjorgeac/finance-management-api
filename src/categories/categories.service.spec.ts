@@ -132,6 +132,35 @@ describe('CategoriesService', () => {
       expect(result[1].name).toBe('Category 2');
     });
 
+    it('should parse categories when color and icon are null', async () => {
+      const mockCategoriesWithNullableVisuals = [
+        {
+          id: 'category-null-visuals',
+          name: 'No Visuals Category',
+          description: 'nullable visuals',
+          color: null,
+          icon: null,
+          budgetAmount: BigInt(10000),
+          isActive: true,
+          createdAt: mockDate,
+          updatedAt: mockDate,
+          spentAmount: BigInt(0),
+          incomeAmount: BigInt(0),
+          transactionCount: 0,
+        },
+      ];
+
+      mockPrismaService.$queryRaw.mockResolvedValue(
+        mockCategoriesWithNullableVisuals,
+      );
+
+      const result = await service.findAll(mockUserId);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].color).toBeNull();
+      expect(result[0].icon).toBeNull();
+    });
+
     it('should return empty array when user has no categories', async () => {
       mockPrismaService.$queryRaw.mockResolvedValue([]);
 
@@ -405,7 +434,8 @@ describe('CategoriesService', () => {
           name: 'Uncategorized',
           description:
             'Default category for transactions from deleted categories',
-          color: '#999999',
+          color: null,
+          icon: null,
           userId: mockUserId,
           budgetAmount: 0,
           isActive: false,
@@ -415,7 +445,7 @@ describe('CategoriesService', () => {
         where: { categoryId: mockCategoryId },
         data: {
           categoryId: mockDefaultCategory.id,
-          updatedAt: expect.any(Date) as Date,
+          updatedAt: expect.any(Date),
         },
       });
     });

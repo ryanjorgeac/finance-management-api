@@ -23,8 +23,8 @@ const RawCategoryData = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().nullable(),
-  color: z.string(),
-  icon: z.string(),
+  color: z.string().nullable(),
+  icon: z.string().nullable(),
   budgetAmount: z.bigint(),
   isActive: z.boolean(),
   createdAt: z.date(),
@@ -33,6 +33,8 @@ const RawCategoryData = z.object({
   incomeAmount: z.bigint(),
   transactionCount: z.number(),
 });
+
+const DEFAULT_CATEGORY_NAME = 'Uncategorized';
 
 const CategoriesSummaryArraySchema = z.array(RawCategoryData);
 
@@ -125,17 +127,18 @@ export class CategoriesService {
       let defaultCategory = await this.prisma.category.findFirst({
         where: {
           userId,
-          name: 'Deleted category',
+          name: DEFAULT_CATEGORY_NAME,
         },
       });
 
       if (!defaultCategory) {
         defaultCategory = await this.prisma.category.create({
           data: {
-            name: 'Uncategorized',
+            name: DEFAULT_CATEGORY_NAME,
             description:
               'Default category for transactions from deleted categories',
-            color: '#999999',
+            color: null,
+            icon: null,
             userId,
             budgetAmount: 0,
             isActive: false,
