@@ -26,10 +26,6 @@ export const centsToReais = ({ value }: { value: bigint }): bigint => {
   return value / 100n;
 };
 
-export const reaisToCents = (reais: bigint | number): bigint => {
-  return BigInt(reais) * 100n;
-};
-
 export const centsToBigInt = (cents: number): bigint => {
   return BigInt(cents);
-}
+};
