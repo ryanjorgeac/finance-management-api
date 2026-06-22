@@ -43,8 +43,8 @@ export class CreateCategoryDto {
   icon?: string;
 
   @ApiProperty({
-    description: 'Budget amount for the category',
-    example: 1000,
+    description: 'Budget amount for the category in cents',
+    example: 100000,
     required: true,
   })
   @IsNumber()
