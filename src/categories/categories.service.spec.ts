@@ -412,7 +412,7 @@ describe('CategoriesService', () => {
 
       const mockDefaultCategory = {
         id: 'default-category-id',
-        name: 'Uncategorized',
+        name: 'Sem categoria',
         userId: mockUserId,
         budgetAmount: 0,
         isActive: false,
@@ -431,7 +431,7 @@ describe('CategoriesService', () => {
 
       expect(mockPrismaService.category.create).toHaveBeenCalledWith({
         data: {
-          name: 'Uncategorized',
+          name: 'Sem categoria',
           description:
             'Default category for transactions from deleted categories',
           color: null,

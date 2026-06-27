@@ -79,7 +79,7 @@ Example response:
 ```json
 {
   "id": "category-id",
-  "name": "Uncategorized",
+  "name": "Sem categoria",
   "description": "Default category for transactions from deleted categories",
   "color": null,
   "icon": null,

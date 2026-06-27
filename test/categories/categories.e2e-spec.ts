@@ -554,7 +554,7 @@ describe('Categories E2E Tests', () => {
         .withHeaders('Authorization', `Bearer ${accessToken}`)
         .expectStatus(404);
 
-      // Check if "Uncategorized" category was created
+      // Check if "Sem categoria" category was created
       const categories = await pactum
         .spec()
         .get('/categories')
@@ -566,7 +566,7 @@ describe('Categories E2E Tests', () => {
           name: string;
           transactionCount: number;
         }>
-      ).find((cat) => cat.name === 'Uncategorized');
+      ).find((cat) => cat.name === 'Sem categoria');
 
       expect(uncategorized).toBeDefined();
       expect(uncategorized?.transactionCount).toBeGreaterThanOrEqual(2);

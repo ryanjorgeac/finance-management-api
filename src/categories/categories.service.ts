@@ -34,7 +34,7 @@ const RawCategoryData = z.object({
   transactionCount: z.number(),
 });
 
-const DEFAULT_CATEGORY_NAME = 'Uncategorized';
+const DEFAULT_CATEGORY_NAME = 'Sem categoria';
 
 const CategoriesSummaryArraySchema = z.array(RawCategoryData);
 
