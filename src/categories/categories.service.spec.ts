@@ -6,6 +6,7 @@ import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CategoriesSummaryDto } from './dto/categories-summary.dto';
+import { DEFAULT_CATEGORY_NAME } from '../common/constants';
 
 describe('CategoriesService', () => {
   let service: CategoriesService;
@@ -67,6 +68,7 @@ describe('CategoriesService', () => {
         ...createCategoryDto,
         budgetAmount: 500n,
         userId: mockUserId,
+        isDefault: false,
         createdAt: mockDate,
         updatedAt: mockDate,
       };
@@ -91,6 +93,22 @@ describe('CategoriesService', () => {
     it('should return all categories with summary data', async () => {
       const mockCategoriesWithSummary = [
         {
+          id: 'default-cat',
+          name: 'Sem categoria',
+          description:
+            'Default category for transactions from deleted categories',
+          color: null,
+          icon: null,
+          budgetAmount: BigInt(0),
+          isActive: true,
+          isDefault: true,
+          createdAt: mockDate,
+          updatedAt: mockDate,
+          spentAmount: BigInt(0),
+          incomeAmount: BigInt(0),
+          transactionCount: 0,
+        },
+        {
           id: 'category-1',
           name: 'Category 1',
           description: 'Description 1',
@@ -98,6 +116,7 @@ describe('CategoriesService', () => {
           icon: 'icon-1',
           budgetAmount: BigInt(50000),
           isActive: true,
+          isDefault: false,
           createdAt: mockDate,
           updatedAt: mockDate,
           spentAmount: BigInt(25000),
@@ -112,6 +131,7 @@ describe('CategoriesService', () => {
           icon: 'icon-2',
           budgetAmount: BigInt(30000),
           isActive: true,
+          isDefault: false,
           createdAt: mockDate,
           updatedAt: mockDate,
           spentAmount: BigInt(15000),
@@ -125,15 +145,32 @@ describe('CategoriesService', () => {
       const result = await service.findAll(mockUserId);
 
       expect(mockPrismaService.$queryRaw).toHaveBeenCalledTimes(1);
-      expect(result).toHaveLength(2);
+      expect(result).toHaveLength(3);
       expect(result[0]).toBeInstanceOf(Category);
-      expect(result[0].name).toBe('Category 1');
-      expect(result[0].spentAmount).toBe(25000n);
-      expect(result[1].name).toBe('Category 2');
+      expect(result[0].name).toBe('Sem categoria');
+      expect(result[1].name).toBe('Category 1');
+      expect(result[1].spentAmount).toBe(25000n);
+      expect(result[2].name).toBe('Category 2');
     });
 
     it('should parse categories when color and icon are null', async () => {
       const mockCategoriesWithNullableVisuals = [
+        {
+          id: 'default-cat',
+          name: 'Sem categoria',
+          description:
+            'Default category for transactions from deleted categories',
+          color: null,
+          icon: null,
+          budgetAmount: BigInt(0),
+          isActive: true,
+          isDefault: true,
+          createdAt: mockDate,
+          updatedAt: mockDate,
+          spentAmount: BigInt(0),
+          incomeAmount: BigInt(0),
+          transactionCount: 0,
+        },
         {
           id: 'category-null-visuals',
           name: 'No Visuals Category',
@@ -142,6 +179,7 @@ describe('CategoriesService', () => {
           icon: null,
           budgetAmount: BigInt(10000),
           isActive: true,
+          isDefault: false,
           createdAt: mockDate,
           updatedAt: mockDate,
           spentAmount: BigInt(0),
@@ -156,22 +194,57 @@ describe('CategoriesService', () => {
 
       const result = await service.findAll(mockUserId);
 
-      expect(result).toHaveLength(1);
-      expect(result[0].color).toBeNull();
-      expect(result[0].icon).toBeNull();
+      expect(result).toHaveLength(2);
+      expect(result[1].color).toBeNull();
+      expect(result[1].icon).toBeNull();
     });
 
-    it('should return empty array when user has no categories', async () => {
+    it('should create default category when user has no categories', async () => {
+      const mockDefaultCategory = {
+        id: 'new-default-cat',
+        name: 'Sem categoria',
+        description:
+          'Default category for transactions from deleted categories',
+        color: null,
+        icon: null,
+        budgetAmount: 0n,
+        userId: mockUserId,
+        isActive: true,
+        isDefault: true,
+        createdAt: mockDate,
+        updatedAt: mockDate,
+      };
+
       mockPrismaService.$queryRaw.mockResolvedValue([]);
+      mockPrismaService.category.findFirst.mockResolvedValue(null);
+      mockPrismaService.category.create.mockResolvedValue(mockDefaultCategory);
 
       const result = await service.findAll(mockUserId);
 
-      expect(result).toEqual([]);
+      expect(result).toHaveLength(1);
+      expect(result[0]).toBeInstanceOf(Category);
+      expect(result[0].name).toBe('Sem categoria');
       expect(mockPrismaService.$queryRaw).toHaveBeenCalledTimes(1);
     });
 
     it('should calculate remaining amount correctly for each category', async () => {
       const mockCategories = [
+        {
+          id: 'default-cat',
+          name: 'Sem categoria',
+          description:
+            'Default category for transactions from deleted categories',
+          color: null,
+          icon: null,
+          budgetAmount: 0n,
+          isActive: true,
+          isDefault: false,
+          createdAt: mockDate,
+          updatedAt: mockDate,
+          spentAmount: 0n,
+          incomeAmount: 0n,
+          transactionCount: 0,
+        },
         {
           id: 'category-1',
           name: 'Test Category',
@@ -180,6 +253,7 @@ describe('CategoriesService', () => {
           icon: 'test',
           budgetAmount: 50000n,
           isActive: true,
+          isDefault: false,
           createdAt: mockDate,
           updatedAt: mockDate,
           spentAmount: 35000n,
@@ -191,7 +265,7 @@ describe('CategoriesService', () => {
       mockPrismaService.$queryRaw.mockResolvedValue(mockCategories);
       const result = await service.findAll(mockUserId);
       const expectedRemaining = 50000n - 35000n + 5000n;
-      expect(result[0].remainingAmount).toBe(expectedRemaining);
+      expect(result[1].remainingAmount).toBe(expectedRemaining);
     });
   });
 
@@ -204,6 +278,7 @@ describe('CategoriesService', () => {
         userId: mockUserId,
         budgetAmount: 50000,
         isActive: true,
+        isDefault: false,
         createdAt: mockDate,
         updatedAt: mockDate,
       };
@@ -234,6 +309,7 @@ describe('CategoriesService', () => {
         userId: 'other-user',
         budgetAmount: 50000,
         isActive: true,
+        isDefault: false,
         createdAt: mockDate,
         updatedAt: mockDate,
       };
@@ -340,6 +416,7 @@ describe('CategoriesService', () => {
         userId: mockUserId,
         budgetAmount: 50000n,
         isActive: true,
+        isDefault: false,
         createdAt: mockDate,
         updatedAt: mockDate,
       };
@@ -371,6 +448,34 @@ describe('CategoriesService', () => {
       expect(result).toBeInstanceOf(Category);
       expect(result.name).toBe('Updated Category');
     });
+
+    it('should throw ForbiddenException when trying to update the default category', async () => {
+      const updateCategoryDto: UpdateCategoryDto = {
+        name: 'Trying to change default',
+        budgetAmount: 1000,
+      };
+
+      const mockDefaultCategory = {
+        id: mockCategoryId,
+        name: DEFAULT_CATEGORY_NAME,
+        userId: mockUserId,
+        budgetAmount: 0n,
+        isActive: true,
+        isDefault: true,
+        createdAt: mockDate,
+        updatedAt: mockDate,
+      };
+
+      mockPrismaService.category.findUnique.mockResolvedValue(
+        mockDefaultCategory,
+      );
+
+      await expect(
+        service.update(mockCategoryId, mockUserId, updateCategoryDto),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(mockPrismaService.category.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('remove', () => {
@@ -381,6 +486,7 @@ describe('CategoriesService', () => {
         userId: mockUserId,
         budgetAmount: 50000,
         isActive: true,
+        isDefault: false,
         createdAt: mockDate,
         updatedAt: mockDate,
       };
@@ -406,6 +512,7 @@ describe('CategoriesService', () => {
         userId: mockUserId,
         budgetAmount: 50000,
         isActive: true,
+        isDefault: false,
         createdAt: mockDate,
         updatedAt: mockDate,
       };
@@ -415,7 +522,8 @@ describe('CategoriesService', () => {
         name: 'Sem categoria',
         userId: mockUserId,
         budgetAmount: 0,
-        isActive: false,
+        isActive: true,
+        isDefault: true,
         createdAt: mockDate,
         updatedAt: mockDate,
       };
@@ -438,7 +546,8 @@ describe('CategoriesService', () => {
           icon: null,
           userId: mockUserId,
           budgetAmount: 0,
-          isActive: false,
+          isActive: true,
+          isDefault: true,
         },
       });
       expect(mockPrismaService.transaction.updateMany).toHaveBeenCalledWith({
@@ -448,6 +557,84 @@ describe('CategoriesService', () => {
           updatedAt: expect.any(Date),
         },
       });
+    });
+
+    it('should throw ForbiddenException when trying to delete the default category', async () => {
+      const mockDefaultCategory = {
+        id: mockCategoryId,
+        name: DEFAULT_CATEGORY_NAME,
+        userId: mockUserId,
+        budgetAmount: 0,
+        isActive: true,
+        isDefault: true,
+        createdAt: mockDate,
+        updatedAt: mockDate,
+      };
+
+      mockPrismaService.category.findUnique.mockResolvedValue(
+        mockDefaultCategory,
+      );
+
+      await expect(service.remove(mockCategoryId, mockUserId)).rejects.toThrow(
+        ForbiddenException,
+      );
+
+      expect(mockPrismaService.category.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('ensureDefaultCategory', () => {
+    it('should return existing default category if it exists', async () => {
+      const mockDefaultCategory = {
+        id: 'default-cat-id',
+        name: DEFAULT_CATEGORY_NAME,
+        description:
+          'Default category for transactions from deleted categories',
+        color: null,
+        icon: null,
+        budgetAmount: 0n,
+        userId: mockUserId,
+        isActive: true,
+        isDefault: true,
+        createdAt: mockDate,
+        updatedAt: mockDate,
+      };
+
+      mockPrismaService.category.findFirst.mockResolvedValue(
+        mockDefaultCategory,
+      );
+
+      const result = await service.ensureDefaultCategory(mockUserId);
+
+      expect(result).toBeInstanceOf(Category);
+      expect(result.name).toBe(DEFAULT_CATEGORY_NAME);
+      expect(mockPrismaService.category.create).not.toHaveBeenCalled();
+    });
+
+    it('should create default category if it does not exist', async () => {
+      const mockCreatedCategory = {
+        id: 'new-default-cat-id',
+        name: DEFAULT_CATEGORY_NAME,
+        description:
+          'Default category for transactions from deleted categories',
+        color: null,
+        icon: null,
+        budgetAmount: 0n,
+        userId: mockUserId,
+        isActive: true,
+        isDefault: true,
+        createdAt: mockDate,
+        updatedAt: mockDate,
+      };
+
+      mockPrismaService.category.findFirst.mockResolvedValue(null);
+      mockPrismaService.category.create.mockResolvedValue(mockCreatedCategory);
+
+      const result = await service.ensureDefaultCategory(mockUserId);
+
+      expect(result).toBeInstanceOf(Category);
+      expect(result.name).toBe(DEFAULT_CATEGORY_NAME);
+      expect(mockPrismaService.category.create).toHaveBeenCalled();
     });
   });
 });

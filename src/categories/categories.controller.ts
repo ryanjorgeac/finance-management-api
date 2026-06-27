@@ -158,6 +158,11 @@ export class CategoriesController {
     type: ExceptionResponseDto,
   })
   @ApiResponse({
+    status: 403,
+    description: 'The default category cannot be modified',
+    type: ExceptionResponseDto,
+  })
+  @ApiResponse({
     status: 404,
     description: 'Category not found',
     type: ExceptionResponseDto,

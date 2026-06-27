@@ -22,6 +22,7 @@ export function fromEntity(category: Category): CategoryResponseDto {
     budgetAmount: bigintToMoneyString(category.budgetAmount),
     userId: category.userId,
     isActive: category.isActive,
+    isDefault: category.isDefault ?? false,
     createdAt: category.createdAt,
     updatedAt: category.updatedAt,
     spentAmount: bigintToMoneyString(category.spentAmount),

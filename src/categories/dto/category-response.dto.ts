@@ -64,6 +64,13 @@ export class CategoryResponseDto {
   isActive: boolean;
 
   @ApiProperty({
+    description: 'Indicates if this is the default category',
+    example: false,
+  })
+  @Expose()
+  isDefault: boolean;
+
+  @ApiProperty({
     description: 'Indicates the date and time when the category was created',
     example: '2025-04-21T12:00:00Z',
     type: String,

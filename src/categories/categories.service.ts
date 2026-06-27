@@ -18,6 +18,10 @@ import {
   bigintToMoneyString,
   centsToBigInt,
 } from '../common/utils/bigint-transform';
+import {
+  DEFAULT_CATEGORY_NAME,
+  DEFAULT_CATEGORY_DATA,
+} from '../common/constants';
 
 const RawCategoryData = z.object({
   id: z.string(),
@@ -33,8 +37,6 @@ const RawCategoryData = z.object({
   incomeAmount: z.bigint(),
   transactionCount: z.number(),
 });
-
-const DEFAULT_CATEGORY_NAME = 'Sem categoria';
 
 const CategoriesSummaryArraySchema = z.array(RawCategoryData);
 
@@ -71,9 +73,18 @@ export class CategoriesService {
       categoriesWithSummary,
     );
 
-    return validateResults.map((data) => {
-      return new Category(data);
-    });
+    const categories = validateResults.map((data) => new Category(data));
+
+    const hasDefault = categories.some(
+      (cat) => cat.name === DEFAULT_CATEGORY_NAME,
+    );
+
+    if (!hasDefault) {
+      const defaultCategory = await this.ensureDefaultCategory(userId);
+      categories.unshift(defaultCategory);
+    }
+
+    return categories;
   }
 
   async findOne(id: string, userId: string): Promise<Category> {
@@ -99,7 +110,12 @@ export class CategoriesService {
     userId: string,
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<Category> {
-    await this.findOne(id, userId);
+    const category = await this.findOne(id, userId);
+
+    if (category.isDefault) {
+      throw new ForbiddenException('The default category cannot be modified');
+    }
+
     this.logger.log(`Updating category ${id}`);
 
     const budgetAmountInCents = updateCategoryDto.budgetAmount
@@ -118,7 +134,12 @@ export class CategoriesService {
   }
 
   async remove(id: string, userId: string): Promise<void> {
-    await this.findOne(id, userId);
+    const category = await this.findOne(id, userId);
+
+    if (category.isDefault) {
+      throw new ForbiddenException('The default category cannot be deleted');
+    }
+
     const transactionsCount = await this.prisma.transaction.count({
       where: { categoryId: id },
     });
@@ -134,14 +155,8 @@ export class CategoriesService {
       if (!defaultCategory) {
         defaultCategory = await this.prisma.category.create({
           data: {
-            name: DEFAULT_CATEGORY_NAME,
-            description:
-              'Default category for transactions from deleted categories',
-            color: null,
-            icon: null,
+            ...DEFAULT_CATEGORY_DATA,
             userId,
-            budgetAmount: 0,
-            isActive: false,
           },
         });
       }
@@ -193,6 +208,32 @@ export class CategoriesService {
       totalBudget: totalBudgetStr,
       totalSpent: totalSpentStr,
       remainingBudget: remainingBudgetStr,
+    });
+  }
+
+  async ensureDefaultCategory(userId: string): Promise<Category> {
+    let defaultCategory = await this.prisma.category.findFirst({
+      where: {
+        userId,
+        name: DEFAULT_CATEGORY_NAME,
+      },
+    });
+
+    if (!defaultCategory) {
+      defaultCategory = await this.prisma.category.create({
+        data: {
+          ...DEFAULT_CATEGORY_DATA,
+          userId,
+        },
+      });
+      this.logger.log(`Created default category for user ${userId}`);
+    }
+
+    return new Category({
+      ...defaultCategory,
+      spentAmount: 0n,
+      incomeAmount: 0n,
+      transactionCount: 0,
     });
   }
 }

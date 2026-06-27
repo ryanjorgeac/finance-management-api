@@ -13,6 +13,7 @@ export class Category {
   user: User;
   transactions: TransactionSummary[] | Transaction[];
   isActive: boolean;
+  isDefault: boolean;
   createdAt: Date;
   updatedAt: Date;
   spentAmount: bigint;

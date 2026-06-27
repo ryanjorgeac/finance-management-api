@@ -34,6 +34,7 @@ model Category {
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
   isActive     Boolean       @default(true)
+  isDefault    Boolean       @default(false)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 

@@ -10,6 +10,7 @@ import * as argon from 'argon2';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+import { DEFAULT_CATEGORY_DATA } from '../common/constants';
 
 @Injectable()
 export class UsersService {
@@ -29,6 +30,14 @@ export class UsersService {
         password: hashedPw,
       },
     });
+
+    await this.prisma.category.create({
+      data: {
+        ...DEFAULT_CATEGORY_DATA,
+        userId: prismaUser.id,
+      },
+    });
+
     return new User(prismaUser);
   }
 
