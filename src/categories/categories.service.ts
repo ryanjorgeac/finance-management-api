@@ -31,6 +31,7 @@ const RawCategoryData = z.object({
   icon: z.string().nullable(),
   budgetAmount: z.bigint(),
   isActive: z.boolean(),
+  isDefault: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date(),
   spentAmount: z.bigint(),

@@ -9,6 +9,7 @@ export const getUserCategoriesQuery = (userId: string) => Prisma.sql`
     c.icon,
     c."budgetAmount",
     c."isActive",
+    c."isDefault",
     c."createdAt",
     c."updatedAt",
     COALESCE(CAST(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END) AS BIGINT), CAST(0 AS BIGINT)) AS "spentAmount",
