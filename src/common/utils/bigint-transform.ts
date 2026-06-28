@@ -14,7 +14,7 @@ export const bigintToMoneyString = (value: bigint): string => {
   if (value === null || value === undefined) {
     return '0,00';
   }
-  const valueInReais = Number(value) / 100;
+  const valueInReais = value / 100n;
   return brlFormatter.format(valueInReais);
 };
 

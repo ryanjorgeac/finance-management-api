@@ -80,8 +80,8 @@ export class CommitmentsController {
     type: [CommitmentResponseDto],
   })
   @ApiResponse({
-    status: 403,
-    description: 'Unauthorized',
+    status: 401,
+    description: 'Unauthorized - missing or invalid credentials',
     type: ExceptionResponseDto,
   })
   async findAll(

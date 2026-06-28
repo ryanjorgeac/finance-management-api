@@ -24,18 +24,22 @@ export class UsersService {
       throw new ConflictException('User cannot be created with this email');
     }
     const hashedPw: string = await this.hashPassword(createUserDto.password);
-    const prismaUser = await this.prisma.user.create({
-      data: {
-        ...createUserDto,
-        password: hashedPw,
-      },
-    });
+    const prismaUser = await this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          ...createUserDto,
+          password: hashedPw,
+        },
+      });
 
-    await this.prisma.category.create({
-      data: {
-        ...DEFAULT_CATEGORY_DATA,
-        userId: prismaUser.id,
-      },
+      await tx.category.create({
+        data: {
+          ...DEFAULT_CATEGORY_DATA,
+          userId: user.id,
+        },
+      });
+
+      return user;
     });
 
     return new User(prismaUser);

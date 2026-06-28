@@ -1,3 +1,4 @@
+import { instanceToPlain } from 'class-transformer';
 import { User } from '@/users/entities/user.entity';
 import { UserRole } from '@prisma/client';
 
@@ -82,12 +83,10 @@ describe('User Entity', () => {
         lastName: 'Doe',
       });
 
-      const { instanceToPlain } = require('class-transformer') as {
-        instanceToPlain: (value: unknown) => unknown;
-      };
       const serialized = instanceToPlain(user) as Record<string, unknown>;
 
       expect(serialized['password']).toBeUndefined();
       expect(serialized['email']).toBe('test@example.com');
+    });
   });
 });

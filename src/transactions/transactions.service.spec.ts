@@ -20,22 +20,27 @@ import { CreateTransactionDto } from './dto/create-transaction.dto';
 describe('TransactionsService', () => {
   let service: TransactionsService;
 
-  const asyncMock = <T = unknown>() => jest.fn<() => Promise<T>>();
+  const asyncMock = <T = unknown>() =>
+    jest.fn<(...args: unknown[]) => Promise<T>>();
 
   type MockTransactionClient = {
     transaction: {
-      create: jest.Mock<() => Promise<unknown>>;
-      findMany: jest.Mock<() => Promise<unknown>>;
-      count: jest.Mock<() => Promise<unknown>>;
-      findUnique: jest.Mock<() => Promise<unknown>>;
-      update: jest.Mock<() => Promise<unknown>>;
-      delete: jest.Mock<() => Promise<unknown>>;
+      create: jest.Mock<(...args: unknown[]) => Promise<unknown>>;
+      findMany: jest.Mock<(...args: unknown[]) => Promise<unknown>>;
+      count: jest.Mock<(...args: unknown[]) => Promise<unknown>>;
+      findUnique: jest.Mock<(...args: unknown[]) => Promise<unknown>>;
+      update: jest.Mock<(...args: unknown[]) => Promise<unknown>>;
+      delete: jest.Mock<(...args: unknown[]) => Promise<unknown>>;
     };
   };
 
   const mockPrismaService: {
-    category: { findUnique: jest.Mock<() => Promise<unknown>> };
-    commitment: { findUnique: jest.Mock<() => Promise<unknown>> };
+    category: {
+      findUnique: jest.Mock<(...args: unknown[]) => Promise<unknown>>;
+    };
+    commitment: {
+      findUnique: jest.Mock<(...args: unknown[]) => Promise<unknown>>;
+    };
     transaction: MockTransactionClient['transaction'];
     $transaction: jest.Mock;
   } = {

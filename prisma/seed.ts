@@ -1,16 +1,8 @@
 import { PrismaClient } from '@prisma/client';
-
-const DEFAULT_CATEGORY_NAME = 'Sem categoria';
-
-const DEFAULT_CATEGORY_DATA = {
-  name: DEFAULT_CATEGORY_NAME,
-  description: 'Categoria padrão para transações sem categorias',
-  color: null,
-  icon: null,
-  budgetAmount: 0,
-  isActive: true,
-  isDefault: true,
-} as const;
+import {
+  DEFAULT_CATEGORY_NAME,
+  DEFAULT_CATEGORY_DATA,
+} from '../src/common/constants';
 
 const prisma = new PrismaClient();
 

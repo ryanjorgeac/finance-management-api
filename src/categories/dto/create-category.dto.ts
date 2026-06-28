@@ -3,7 +3,8 @@ import {
   IsNotEmpty,
   IsString,
   IsOptional,
-  IsNumber,
+  IsInt,
+  Min,
   MaxLength,
 } from 'class-validator';
 
@@ -50,7 +51,8 @@ export class CreateCategoryDto {
     example: 100000,
     required: true,
   })
-  @IsNumber()
+  @IsInt()
+  @Min(0)
   budgetAmount: number;
 
   @ApiProperty({

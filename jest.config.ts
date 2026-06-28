@@ -4,8 +4,9 @@ const config: Config = {
   clearMocks: true,
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>/src', '<rootDir>/test'],
-  testRegex: '.*\\.spec\\.ts$',
+  roots: ['<rootDir>/src'],
+  testRegex: '.*.spec.ts$',
+  testPathIgnorePatterns: ['.e2e-spec.ts$'],
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
