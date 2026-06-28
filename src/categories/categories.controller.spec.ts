@@ -8,6 +8,8 @@ import {
   UpdateCategoryDto,
   CategoryResponseDto,
   CategoriesSummaryDto,
+  BulkCreateCategoryDto,
+  BulkCreateCategoryResponseDto,
 } from '@/categories/dto';
 
 describe('CategoriesController', () => {
@@ -20,6 +22,7 @@ describe('CategoriesController', () => {
     update: jest.fn(),
     remove: jest.fn(),
     getUserSummary: jest.fn(),
+    bulkCreate: jest.fn(),
   };
 
   const mockUser = { sub: 'user-123' };
@@ -251,6 +254,28 @@ describe('CategoriesController', () => {
       );
       expect(result).toBeInstanceOf(CategoryResponseDto);
       expect(result.name).toBe('Updated Category');
+    });
+  });
+
+  describe('bulkCreate', () => {
+    it('should delegate to service and return BulkCreateCategoryResponseDto', async () => {
+      const bulkDto: BulkCreateCategoryDto = {
+        categories: [
+          { name: 'Groceries', budgetAmount: 50000, isActive: true },
+          { name: 'Transport', budgetAmount: 20000, isActive: true },
+        ] as CreateCategoryDto[],
+      };
+
+      mockCategoriesService.bulkCreate.mockResolvedValue({ count: 2 });
+
+      const result = await controller.bulkCreate(mockUser, bulkDto);
+
+      expect(mockCategoriesService.bulkCreate).toHaveBeenCalledWith(
+        mockUser.sub,
+        bulkDto.categories,
+      );
+      expect(result).toBeInstanceOf(BulkCreateCategoryResponseDto);
+      expect(result.count).toBe(2);
     });
   });
 

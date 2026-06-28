@@ -21,6 +21,7 @@ describe('CategoriesService', () => {
       findFirst: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      createMany: jest.fn(),
     },
     transaction: {
       count: jest.fn(),
@@ -580,6 +581,51 @@ describe('CategoriesService', () => {
       );
 
       expect(mockPrismaService.category.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('bulkCreate', () => {
+    const validDtos = [
+      { name: 'Groceries', budgetAmount: 50000, isActive: true },
+      { name: 'Transport', budgetAmount: 20000, isActive: true },
+    ] as CreateCategoryDto[];
+
+    it('should bulk create categories and return count', async () => {
+      mockPrismaService.category.createMany.mockResolvedValue({ count: 2 });
+
+      const result = await service.bulkCreate(mockUserId, validDtos);
+
+      expect(mockPrismaService.category.createMany).toHaveBeenCalledWith({
+        data: [
+          { name: 'Groceries', budgetAmount: 50000n, isActive: true, userId: mockUserId },
+          { name: 'Transport', budgetAmount: 20000n, isActive: true, userId: mockUserId },
+        ],
+      });
+      expect(result).toEqual({ count: 2 });
+    });
+
+    it('should throw ForbiddenException when any category uses the reserved default name', async () => {
+      const dtosWithReserved = [
+        ...validDtos,
+        { name: DEFAULT_CATEGORY_NAME, budgetAmount: 0, isActive: true } as CreateCategoryDto,
+      ];
+
+      await expect(
+        service.bulkCreate(mockUserId, dtosWithReserved),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(mockPrismaService.category.createMany).not.toHaveBeenCalled();
+    });
+
+    it('should convert each budgetAmount to bigint via centsToBigInt', async () => {
+      const dtos = [{ name: 'Bills', budgetAmount: 150000, isActive: true }] as CreateCategoryDto[];
+      mockPrismaService.category.createMany.mockResolvedValue({ count: 1 });
+
+      await service.bulkCreate(mockUserId, dtos);
+
+      expect(mockPrismaService.category.createMany).toHaveBeenCalledWith({
+        data: [{ name: 'Bills', budgetAmount: 150000n, isActive: true, userId: mockUserId }],
+      });
     });
   });
 

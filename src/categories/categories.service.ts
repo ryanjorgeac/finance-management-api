@@ -212,6 +212,31 @@ export class CategoriesService {
     });
   }
 
+  async bulkCreate(
+    userId: string,
+    dtos: CreateCategoryDto[],
+  ): Promise<{ count: number }> {
+    const reserved = dtos.find((dto) => dto.name === DEFAULT_CATEGORY_NAME);
+
+    if (reserved) {
+      throw new ForbiddenException('The default category name is reserved');
+    }
+
+    const data = dtos.map((dto) => ({
+      ...dto,
+      budgetAmount: dto.budgetAmount ? centsToBigInt(dto.budgetAmount) : 0n,
+      userId,
+    }));
+
+    const result = await this.prisma.category.createMany({ data });
+
+    this.logger.log(
+      `Bulk created ${result.count} categories for user ${userId}`,
+    );
+
+    return { count: result.count };
+  }
+
   async ensureDefaultCategory(userId: string): Promise<Category> {
     let defaultCategory = await this.prisma.category.findFirst({
       where: {

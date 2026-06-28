@@ -20,6 +20,7 @@ export class CreateCategoryDto {
   @ApiProperty({
     description: 'Description of the category',
     example: 'Expenses related to groceries',
+    required: false,
   })
   @IsOptional()
   @IsString()
@@ -29,6 +30,7 @@ export class CreateCategoryDto {
   @ApiProperty({
     description: 'Color associated with the category',
     example: '#FF5733',
+    required: false,
   })
   @IsOptional()
   @IsString()
@@ -37,6 +39,7 @@ export class CreateCategoryDto {
   @ApiProperty({
     description: 'Icon associated with the category',
     example: 'icon-name',
+    required: false,
   })
   @IsOptional()
   @IsString()
@@ -53,6 +56,8 @@ export class CreateCategoryDto {
   @ApiProperty({
     description: 'Indicates if the category is active',
     example: true,
+    default: true,
+    required: false,
   })
   @IsOptional()
   isActive?: boolean;
