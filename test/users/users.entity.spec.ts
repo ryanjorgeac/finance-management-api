@@ -83,10 +83,13 @@ describe('User Entity', () => {
       });
 
       // This mimics what happens when the entity is serialized
-      const serialized = JSON.parse(JSON.stringify(user));
+      const serialized = JSON.parse(JSON.stringify(user)) as Record<
+        string,
+        unknown
+      >;
 
-      expect(serialized.password).toBe('secret_password');
-      expect(serialized.email).toBe('test@example.com');
+      expect(serialized['password']).toBe('secret_password');
+      expect(serialized['email']).toBe('test@example.com');
     });
   });
 });

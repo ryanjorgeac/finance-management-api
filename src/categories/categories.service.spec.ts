@@ -546,13 +546,24 @@ describe('CategoriesService', () => {
           isDefault: true,
         },
       });
-      expect(mockPrismaService.transaction.updateMany).toHaveBeenCalledWith({
-        where: { categoryId: mockCategoryId },
-        data: {
-          categoryId: mockDefaultCategory.id,
-          updatedAt: expect.any(Date),
-        },
-      });
+
+      const updateManyCallsUnknown: unknown =
+        mockPrismaService.transaction.updateMany.mock.calls;
+      const updateManyCalls = updateManyCallsUnknown as Array<
+        [
+          {
+            where: { categoryId: string };
+            data: { categoryId: string; updatedAt: Date };
+          },
+        ]
+      >;
+
+      expect(updateManyCalls).toHaveLength(1);
+      expect(updateManyCalls[0][0].where.categoryId).toBe(mockCategoryId);
+      expect(updateManyCalls[0][0].data.categoryId).toBe(
+        mockDefaultCategory.id,
+      );
+      expect(updateManyCalls[0][0].data.updatedAt).toBeInstanceOf(Date);
     });
 
     it('should throw ForbiddenException when trying to delete the default category', async () => {

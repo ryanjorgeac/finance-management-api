@@ -12,28 +12,48 @@ import {
   jest,
 } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
+import { TransactionType } from '@prisma/client';
 import { PrismaService } from '@/database/prisma.service';
 import { TransactionsService } from './transactions.service';
+import { CreateTransactionDto } from './dto/create-transaction.dto';
 
 describe('TransactionsService', () => {
   let service: TransactionsService;
 
-  const mockPrismaService: any = {
+  const asyncMock = <T = unknown>() => jest.fn<() => Promise<T>>();
+
+  type MockTransactionClient = {
+    transaction: {
+      create: jest.Mock<() => Promise<unknown>>;
+      findMany: jest.Mock<() => Promise<unknown>>;
+      count: jest.Mock<() => Promise<unknown>>;
+      findUnique: jest.Mock<() => Promise<unknown>>;
+      update: jest.Mock<() => Promise<unknown>>;
+      delete: jest.Mock<() => Promise<unknown>>;
+    };
+  };
+
+  const mockPrismaService: {
+    category: { findUnique: jest.Mock<() => Promise<unknown>> };
+    commitment: { findUnique: jest.Mock<() => Promise<unknown>> };
+    transaction: MockTransactionClient['transaction'];
+    $transaction: jest.Mock;
+  } = {
     category: {
-      findUnique: jest.fn(),
+      findUnique: asyncMock(),
     },
     commitment: {
-      findUnique: jest.fn(),
+      findUnique: asyncMock(),
     },
     transaction: {
-      findMany: jest.fn(),
-      count: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      create: jest.fn(),
+      findMany: asyncMock(),
+      count: asyncMock(),
+      findUnique: asyncMock(),
+      update: asyncMock(),
+      delete: asyncMock(),
+      create: asyncMock(),
     },
-    $transaction: jest.fn(async (callback: any) =>
+    $transaction: jest.fn((callback: (tx: MockTransactionClient) => unknown) =>
       callback({ transaction: mockPrismaService.transaction }),
     ),
   };
@@ -62,13 +82,13 @@ describe('TransactionsService', () => {
     it('stores incoming cents value exactly (no real-to-cents conversion)', async () => {
       const userId = 'user-1';
       const categoryId = 'category-1';
-      const createTransactionDto = {
+      const createTransactionDto: CreateTransactionDto = {
         amountCents: 45025,
-        type: 'EXPENSE',
+        type: TransactionType.EXPENSE,
         description: 'rent',
         date: mockDate,
         categoryId,
-      } as const;
+      };
 
       mockPrismaService.category.findUnique.mockResolvedValue({
         id: categoryId,
@@ -78,7 +98,7 @@ describe('TransactionsService', () => {
       mockPrismaService.transaction.create.mockResolvedValue({
         id: 'tx-1',
         amount: 45025n,
-        type: 'EXPENSE',
+        type: TransactionType.EXPENSE,
         description: 'rent',
         date: mockDate,
         userId,
@@ -87,14 +107,14 @@ describe('TransactionsService', () => {
         updatedAt: mockDate,
       });
 
-      await service.create(userId, createTransactionDto as any);
+      await service.create(userId, createTransactionDto);
 
       expect(mockPrismaService.transaction.create).toHaveBeenCalledWith({
         data: {
           categoryId,
           date: mockDate,
           description: 'rent',
-          type: 'EXPENSE',
+          type: TransactionType.EXPENSE,
           amount: 45025n,
           userId,
         },
@@ -104,13 +124,13 @@ describe('TransactionsService', () => {
     it('rejects non-integer cents inputs', async () => {
       const userId = 'user-1';
       const categoryId = 'category-1';
-      const createTransactionDto = {
+      const createTransactionDto: CreateTransactionDto = {
         amountCents: 450.25,
-        type: 'EXPENSE',
+        type: TransactionType.EXPENSE,
         description: 'rent',
         date: mockDate,
         categoryId,
-      } as const;
+      };
 
       mockPrismaService.category.findUnique.mockResolvedValue({
         id: categoryId,
@@ -118,45 +138,45 @@ describe('TransactionsService', () => {
       });
 
       await expect(
-        service.create(userId, createTransactionDto as any),
+        service.create(userId, createTransactionDto),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('throws NotFoundException when category does not exist', async () => {
       const userId = 'user-1';
-      const createTransactionDto = {
+      const createTransactionDto: CreateTransactionDto = {
         amountCents: 100,
-        type: 'EXPENSE',
+        type: TransactionType.EXPENSE,
         description: 'x',
         date: mockDate,
         categoryId: 'missing-category',
-      } as const;
+      };
 
       mockPrismaService.category.findUnique.mockResolvedValue(null);
 
-      await expect(service.create(userId, createTransactionDto as any)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.create(userId, createTransactionDto),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('throws ForbiddenException when category belongs to another user', async () => {
       const userId = 'user-1';
-      const createTransactionDto = {
+      const createTransactionDto: CreateTransactionDto = {
         amountCents: 100,
-        type: 'EXPENSE',
+        type: TransactionType.EXPENSE,
         description: 'x',
         date: mockDate,
         categoryId: 'category-1',
-      } as const;
+      };
 
       mockPrismaService.category.findUnique.mockResolvedValue({
         id: 'category-1',
         userId: 'other-user',
       });
 
-      await expect(service.create(userId, createTransactionDto as any)).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.create(userId, createTransactionDto),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -167,7 +187,7 @@ describe('TransactionsService', () => {
     const mockCommitment = {
       id: commitmentId,
       amount: 150000n,
-      type: 'EXPENSE',
+      type: TransactionType.EXPENSE,
       description: 'Monthly rent',
       date: mockDate,
       frequency: 'MONTHLY',
@@ -182,7 +202,7 @@ describe('TransactionsService', () => {
       mockPrismaService.transaction.create.mockResolvedValue({
         id: 'tx-from-commitment',
         amount: 150000n,
-        type: 'EXPENSE',
+        type: TransactionType.EXPENSE,
         description: 'Monthly rent',
         date: expect.any(Date),
         userId,
@@ -199,7 +219,7 @@ describe('TransactionsService', () => {
       expect(mockPrismaService.transaction.create).toHaveBeenCalledWith({
         data: {
           amount: 150000n,
-          type: 'EXPENSE',
+          type: TransactionType.EXPENSE,
           description: 'Monthly rent',
           date: expect.any(Date),
           userId,
@@ -232,4 +252,3 @@ describe('TransactionsService', () => {
     });
   });
 });
-
