@@ -27,7 +27,7 @@ describe('User Entity', () => {
       expect(user.updatedAt).toEqual(userData.updatedAt);
     });
 
-    it('should initialize with empty arrays for transactions and categories if not provided', () => {
+    it('should leave transactions and categories undefined if not provided', () => {
       const user = new User({
         id: 'user-123',
         email: 'test@example.com',
