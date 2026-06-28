@@ -22,6 +22,9 @@ describe('TransactionsService', () => {
     category: {
       findUnique: jest.fn(),
     },
+    commitment: {
+      findUnique: jest.fn(),
+    },
     transaction: {
       findMany: jest.fn(),
       count: jest.fn(),
@@ -156,4 +159,77 @@ describe('TransactionsService', () => {
       );
     });
   });
+
+  describe('createFromCommitment', () => {
+    const userId = 'user-1';
+    const commitmentId = 'commitment-1';
+
+    const mockCommitment = {
+      id: commitmentId,
+      amount: 150000n,
+      type: 'EXPENSE',
+      description: 'Monthly rent',
+      date: mockDate,
+      frequency: 'MONTHLY',
+      userId,
+      categoryId: 'category-1',
+      createdAt: mockDate,
+      updatedAt: mockDate,
+    };
+
+    it('should create a transaction from commitment using current date', async () => {
+      mockPrismaService.commitment.findUnique.mockResolvedValue(mockCommitment);
+      mockPrismaService.transaction.create.mockResolvedValue({
+        id: 'tx-from-commitment',
+        amount: 150000n,
+        type: 'EXPENSE',
+        description: 'Monthly rent',
+        date: expect.any(Date),
+        userId,
+        categoryId: 'category-1',
+        createdAt: mockDate,
+        updatedAt: mockDate,
+      });
+
+      await service.createFromCommitment(commitmentId, userId);
+
+      expect(mockPrismaService.commitment.findUnique).toHaveBeenCalledWith({
+        where: { id: commitmentId },
+      });
+      expect(mockPrismaService.transaction.create).toHaveBeenCalledWith({
+        data: {
+          amount: 150000n,
+          type: 'EXPENSE',
+          description: 'Monthly rent',
+          date: expect.any(Date),
+          userId,
+          categoryId: 'category-1',
+        },
+      });
+    });
+
+    it('should throw NotFoundException when commitment does not exist', async () => {
+      mockPrismaService.commitment.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.createFromCommitment(commitmentId, userId),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(mockPrismaService.transaction.create).not.toHaveBeenCalled();
+    });
+
+    it('should throw ForbiddenException when commitment belongs to another user', async () => {
+      mockPrismaService.commitment.findUnique.mockResolvedValue({
+        ...mockCommitment,
+        userId: 'other-user',
+      });
+
+      await expect(
+        service.createFromCommitment(commitmentId, userId),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(mockPrismaService.transaction.create).not.toHaveBeenCalled();
+    });
+  });
 });
+

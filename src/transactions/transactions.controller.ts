@@ -76,6 +76,40 @@ export class TransactionsController {
     return fromEntity(transaction);
   }
 
+  @Post('from-commitment/:commitmentId')
+  @ApiOperation({ summary: 'Create a transaction from an existing commitment' })
+  @ApiParam({
+    name: 'commitmentId',
+    description: 'Commitment ID',
+    type: 'string',
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Transaction created successfully from commitment',
+    type: TransactionResponseDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - commitment belongs to another user',
+    type: ExceptionResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Commitment not found',
+    type: ExceptionResponseDto,
+  })
+  async createFromCommitment(
+    @GetUser() user: { sub: string },
+    @Param('commitmentId', ParseUUIDPipe) commitmentId: string,
+  ): Promise<TransactionResponseDto> {
+    const transaction = await this.transactionsService.createFromCommitment(
+      commitmentId,
+      user.sub,
+    );
+    return fromEntity(transaction);
+  }
+
   @Get()
   @ApiOperation({
     summary: 'Get all transactions with filtering and pagination',

@@ -217,4 +217,39 @@ export class TransactionsService {
       });
     });
   }
+
+  async createFromCommitment(
+    commitmentId: string,
+    userId: string,
+  ): Promise<Transaction> {
+    const commitment = await this.prisma.commitment.findUnique({
+      where: { id: commitmentId },
+    });
+
+    if (!commitment) {
+      throw new NotFoundException(
+        `Commitment with ID ${commitmentId} not found`,
+      );
+    }
+
+    if (commitment.userId !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to use this commitment',
+      );
+    }
+
+    return this.prisma.$transaction(async (prismaClient) => {
+      const prismaTransaction = await prismaClient.transaction.create({
+        data: {
+          amount: commitment.amount,
+          type: commitment.type,
+          description: commitment.description,
+          date: new Date(),
+          userId,
+          categoryId: commitment.categoryId,
+        },
+      });
+      return new Transaction(prismaTransaction);
+    });
+  }
 }

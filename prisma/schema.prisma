@@ -16,6 +16,7 @@ model User {
   lastName     String
   role         UserRole        @default(USER)
   transactions Transaction[]
+  commitments  Commitment[]
   categories   Category[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
@@ -33,6 +34,7 @@ model Category {
   userId       String
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
+  commitments  Commitment[]
   isActive     Boolean       @default(true)
   isDefault    Boolean       @default(false)
   createdAt    DateTime      @default(now())
@@ -57,6 +59,22 @@ model Transaction {
   @@map("transactions")
 }
 
+model Commitment {
+  id            String @id @default(uuid())
+  amount        BigInt
+  type          TransactionType
+  description   String
+  date          DateTime?
+  frequency     CommitmentFrequency
+  userId        String
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  @@map("commitments")
+}
+
 enum TransactionType {
   INCOME
   EXPENSE
@@ -65,4 +83,12 @@ enum TransactionType {
 enum UserRole {
   USER
   ADMIN
+}
+
+enum CommitmentFrequency {
+  MONTHLY
+  WEEKLY
+  DAILY
+  YEARLY
+  ONCE
 }
