@@ -141,11 +141,12 @@ export class CategoriesService {
       throw new ForbiddenException('The default category cannot be deleted');
     }
 
-    const transactionsCount = await this.prisma.transaction.count({
-      where: { categoryId: id },
-    });
+    const [transactionsCount, commitmentsCount] = await Promise.all([
+      this.prisma.transaction.count({ where: { categoryId: id } }),
+      this.prisma.commitment.count({ where: { categoryId: id } }),
+    ]);
 
-    if (transactionsCount > 0) {
+    if (transactionsCount > 0 || commitmentsCount > 0) {
       let defaultCategory = await this.prisma.category.findFirst({
         where: {
           userId,
@@ -162,17 +163,33 @@ export class CategoriesService {
         });
       }
 
-      await this.prisma.transaction.updateMany({
-        where: { categoryId: id },
-        data: {
-          categoryId: defaultCategory.id,
-          updatedAt: new Date(),
-        },
-      });
-      this.logger.log(
-        `Reassigned ${transactionsCount} transactions from category ${id} to default category ${defaultCategory.id}`,
-      );
+      if (transactionsCount > 0) {
+        await this.prisma.transaction.updateMany({
+          where: { categoryId: id },
+          data: {
+            categoryId: defaultCategory.id,
+            updatedAt: new Date(),
+          },
+        });
+        this.logger.log(
+          `Reassigned ${transactionsCount} transactions from category ${id} to default category ${defaultCategory.id}`,
+        );
+      }
+
+      if (commitmentsCount > 0) {
+        await this.prisma.commitment.updateMany({
+          where: { categoryId: id },
+          data: {
+            categoryId: defaultCategory.id,
+            updatedAt: new Date(),
+          },
+        });
+        this.logger.log(
+          `Reassigned ${commitmentsCount} commitments from category ${id} to default category ${defaultCategory.id}`,
+        );
+      }
     }
+
     await this.prisma.category.delete({
       where: { id },
     });

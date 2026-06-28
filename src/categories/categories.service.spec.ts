@@ -27,6 +27,10 @@ describe('CategoriesService', () => {
       count: jest.fn(),
       updateMany: jest.fn(),
     },
+    commitment: {
+      count: jest.fn(),
+      updateMany: jest.fn(),
+    },
     $queryRaw: jest.fn(),
   };
 
@@ -490,11 +494,15 @@ describe('CategoriesService', () => {
 
       mockPrismaService.category.findUnique.mockResolvedValue(mockCategory);
       mockPrismaService.transaction.count.mockResolvedValue(0);
+      mockPrismaService.commitment.count.mockResolvedValue(0);
       mockPrismaService.category.delete.mockResolvedValue(mockCategory);
 
       await service.remove(mockCategoryId, mockUserId);
 
       expect(mockPrismaService.transaction.count).toHaveBeenCalledWith({
+        where: { categoryId: mockCategoryId },
+      });
+      expect(mockPrismaService.commitment.count).toHaveBeenCalledWith({
         where: { categoryId: mockCategoryId },
       });
       expect(mockPrismaService.category.delete).toHaveBeenCalledWith({
@@ -527,6 +535,7 @@ describe('CategoriesService', () => {
 
       mockPrismaService.category.findUnique.mockResolvedValue(mockCategory);
       mockPrismaService.transaction.count.mockResolvedValue(5);
+      mockPrismaService.commitment.count.mockResolvedValue(0);
       mockPrismaService.category.findFirst.mockResolvedValue(null);
       mockPrismaService.category.create.mockResolvedValue(mockDefaultCategory);
       mockPrismaService.transaction.updateMany.mockResolvedValue({ count: 5 });
@@ -564,6 +573,59 @@ describe('CategoriesService', () => {
         mockDefaultCategory.id,
       );
       expect(updateManyCalls[0][0].data.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it('should move commitments to default category before deletion', async () => {
+      const mockCategory = {
+        id: mockCategoryId,
+        name: 'Test Category',
+        userId: mockUserId,
+        budgetAmount: 50000,
+        isActive: true,
+        isDefault: false,
+        createdAt: mockDate,
+        updatedAt: mockDate,
+      };
+
+      const mockDefaultCategory = {
+        id: 'default-category-id',
+        name: 'Sem categoria',
+        userId: mockUserId,
+        budgetAmount: 0,
+        isActive: true,
+        isDefault: true,
+        createdAt: mockDate,
+        updatedAt: mockDate,
+      };
+
+      mockPrismaService.category.findUnique.mockResolvedValue(mockCategory);
+      mockPrismaService.transaction.count.mockResolvedValue(0);
+      mockPrismaService.commitment.count.mockResolvedValue(3);
+      mockPrismaService.category.findFirst.mockResolvedValue(
+        mockDefaultCategory,
+      );
+      mockPrismaService.commitment.updateMany.mockResolvedValue({ count: 3 });
+      mockPrismaService.category.delete.mockResolvedValue(mockCategory);
+
+      await service.remove(mockCategoryId, mockUserId);
+
+      expect(mockPrismaService.transaction.updateMany).not.toHaveBeenCalled();
+
+      const commitmentUpdateCalls: unknown =
+        mockPrismaService.commitment.updateMany.mock.calls;
+      const typedCalls = commitmentUpdateCalls as Array<
+        [
+          {
+            where: { categoryId: string };
+            data: { categoryId: string; updatedAt: Date };
+          },
+        ]
+      >;
+
+      expect(typedCalls).toHaveLength(1);
+      expect(typedCalls[0][0].where.categoryId).toBe(mockCategoryId);
+      expect(typedCalls[0][0].data.categoryId).toBe(mockDefaultCategory.id);
+      expect(typedCalls[0][0].data.updatedAt).toBeInstanceOf(Date);
     });
 
     it('should throw ForbiddenException when trying to delete the default category', async () => {
