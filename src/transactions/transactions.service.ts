@@ -11,7 +11,7 @@ import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
 import { TransactionQueryCondition } from 'src/common/types/transaction-query-condition';
 import { TransactionResponseDto } from './dto';
-import { dollarsToCents } from '@/common/utils/bigint-transform';
+import { centsToBigInt } from '@/common/utils/bigint-transform';
 import { fromEntity, toEntity } from '@/common/utils/transaction-mapper';
 import { TransactionWithCategory } from './types/transaction-with-category.type';
 
@@ -19,17 +19,29 @@ import { TransactionWithCategory } from './types/transaction-with-category.type'
 export class TransactionsService {
   constructor(private prisma: PrismaService) {}
 
+  private parseAmountCents(amountCents: number): bigint {
+    try {
+      return centsToBigInt(amountCents);
+    } catch {
+      throw new BadRequestException(
+        'amountCents must be an integer number of cents',
+      );
+    }
+  }
+
   async create(
     userId: string,
     createTransactionDto: CreateTransactionDto,
   ): Promise<Transaction> {
+    const { amountCents, ...createData } = createTransactionDto;
+
     const category = await this.prisma.category.findUnique({
-      where: { id: createTransactionDto.categoryId },
+      where: { id: createData.categoryId },
     });
 
     if (!category) {
       throw new NotFoundException(
-        `Category with ID ${createTransactionDto.categoryId} not found`,
+        `Category with ID ${createData.categoryId} not found`,
       );
     }
 
@@ -39,12 +51,12 @@ export class TransactionsService {
       );
     }
 
-    const amountInCents = dollarsToCents(createTransactionDto.amount);
+    const amountInCents = this.parseAmountCents(amountCents);
 
     return this.prisma.$transaction(async (prismaClient) => {
       const prismaTransaction = await prismaClient.transaction.create({
         data: {
-          ...createTransactionDto,
+          ...createData,
           amount: amountInCents,
           userId,
         },
@@ -142,18 +154,20 @@ export class TransactionsService {
     userId: string,
     updateTransactionDto: UpdateTransactionDto,
   ): Promise<Transaction> {
+    const { amountCents, ...updateData } = updateTransactionDto;
+
     const existingTransaction = await this.findOne(id, userId);
     if (
-      updateTransactionDto.categoryId &&
-      updateTransactionDto.categoryId !== existingTransaction.categoryId
+      updateData.categoryId &&
+      updateData.categoryId !== existingTransaction.categoryId
     ) {
       const category = await this.prisma.category.findUnique({
-        where: { id: updateTransactionDto.categoryId },
+        where: { id: updateData.categoryId },
       });
 
       if (!category) {
         throw new NotFoundException(
-          `Category with ID ${updateTransactionDto.categoryId} not found`,
+          `Category with ID ${updateData.categoryId} not found`,
         );
       }
 
@@ -164,11 +178,19 @@ export class TransactionsService {
       }
     }
 
+    const amountInCents =
+      amountCents !== undefined
+        ? this.parseAmountCents(amountCents)
+        : undefined;
+
     return this.prisma.$transaction(async (prismaClient) => {
       const updatedPrismaTransaction: TransactionWithCategory =
         await prismaClient.transaction.update({
           where: { id },
-          data: updateTransactionDto,
+          data: {
+            ...updateData,
+            ...(amountInCents !== undefined ? { amount: amountInCents } : {}),
+          },
           include: {
             category: true,
           },
@@ -193,6 +215,41 @@ export class TransactionsService {
       await prismaClient.transaction.delete({
         where: { id },
       });
+    });
+  }
+
+  async createFromCommitment(
+    commitmentId: string,
+    userId: string,
+  ): Promise<Transaction> {
+    const commitment = await this.prisma.commitment.findUnique({
+      where: { id: commitmentId },
+    });
+
+    if (!commitment) {
+      throw new NotFoundException(
+        `Commitment with ID ${commitmentId} not found`,
+      );
+    }
+
+    if (commitment.userId !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to use this commitment',
+      );
+    }
+
+    return this.prisma.$transaction(async (prismaClient) => {
+      const prismaTransaction = await prismaClient.transaction.create({
+        data: {
+          amount: commitment.amount,
+          type: commitment.type,
+          description: commitment.description,
+          date: new Date(),
+          userId,
+          categoryId: commitment.categoryId,
+        },
+      });
+      return new Transaction(prismaTransaction);
     });
   }
 }

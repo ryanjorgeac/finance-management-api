@@ -13,6 +13,7 @@ export class Category {
   user: User;
   transactions: TransactionSummary[] | Transaction[];
   isActive: boolean;
+  isDefault: boolean;
   createdAt: Date;
   updatedAt: Date;
   spentAmount: bigint;
@@ -22,10 +23,32 @@ export class Category {
 
   constructor(partial: Partial<Category>) {
     Object.assign(this, partial);
+
+    this.budgetAmount = this.normalizeBigInt(this.budgetAmount || null);
+    this.spentAmount = this.normalizeBigInt(this.spentAmount) || 0n;
+    this.incomeAmount = this.normalizeBigInt(this.incomeAmount) || 0n;
+    this.transactionCount = this.transactionCount || 0;
+
     this.remainingAmount = this.getRemainingAmount();
   }
 
+  private normalizeBigInt(value: any): bigint {
+    if (value === null || value === undefined) {
+      return 0n;
+    }
+    if (typeof value === 'bigint') {
+      return value;
+    }
+    if (typeof value === 'number' || typeof value === 'string') {
+      return BigInt(value);
+    }
+    return 0n;
+  }
+
   getRemainingAmount(): bigint {
-    return this.budgetAmount - this.spentAmount + this.incomeAmount;
+    const budget = this.budgetAmount || 0n;
+    const spent = this.spentAmount || 0n;
+    const income = this.incomeAmount || 0n;
+    return budget - spent + income;
   }
 }

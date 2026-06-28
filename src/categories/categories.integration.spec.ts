@@ -46,7 +46,7 @@ describe('Categories Integration', () => {
   });
 
   describe('GET /categories/summary', () => {
-    it('should have the endpoint available', async () => {
+    it('should have the endpoint available', () => {
       // This test verifies that the module compiles and the endpoint exists
       // without testing authentication or full functionality
       expect(app).toBeDefined();

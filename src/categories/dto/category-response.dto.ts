@@ -42,7 +42,7 @@ export class CategoryResponseDto {
 
   @ApiProperty({
     description: 'Budget amount for the category',
-    example: '500.00',
+    example: '5.000,00',
     type: 'string',
   })
   @IsString()
@@ -64,6 +64,13 @@ export class CategoryResponseDto {
   isActive: boolean;
 
   @ApiProperty({
+    description: 'Indicates if this is the default category',
+    example: false,
+  })
+  @Expose()
+  isDefault: boolean;
+
+  @ApiProperty({
     description: 'Indicates the date and time when the category was created',
     example: '2025-04-21T12:00:00Z',
     type: String,
@@ -83,8 +90,8 @@ export class CategoryResponseDto {
   updatedAt: Date;
 
   @ApiProperty({
-    description: 'Total amount spent in this category in dollars',
-    example: '350.75',
+    description: 'Total amount spent in this category in reais',
+    example: '350,75',
     type: 'string',
   })
   @Expose()
@@ -92,8 +99,8 @@ export class CategoryResponseDto {
   spentAmount: string;
 
   @ApiProperty({
-    description: 'Total income amount in this category in dollars',
-    example: '50.00',
+    description: 'Total income amount in this category in reais',
+    example: '50,00',
     type: 'string',
   })
   @Expose()
@@ -101,8 +108,8 @@ export class CategoryResponseDto {
   incomeAmount: string;
 
   @ApiProperty({
-    description: 'Remaining budget amount for this category in dollars',
-    example: '149.25',
+    description: 'Remaining budget amount for this category in reais',
+    example: '149,25',
     type: 'string',
   })
   @Expose()

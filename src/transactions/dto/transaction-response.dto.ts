@@ -13,8 +13,9 @@ export class TransactionResponseDto {
   id: string;
 
   @ApiProperty({
-    description: 'Amount of the transaction in dollars',
-    example: '100.52',
+    description:
+      'Formatted transaction amount for display (input is sent as amountCents)',
+    example: '100,52',
   })
   @IsString()
   @Expose()

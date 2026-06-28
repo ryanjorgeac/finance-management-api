@@ -8,11 +8,12 @@ import {
   UpdateCategoryDto,
   CategoryResponseDto,
   CategoriesSummaryDto,
+  BulkCreateCategoryDto,
+  BulkCreateCategoryResponseDto,
 } from '@/categories/dto';
 
 describe('CategoriesController', () => {
   let controller: CategoriesController;
-  let service: CategoriesService;
 
   const mockCategoriesService = {
     create: jest.fn(),
@@ -21,10 +22,12 @@ describe('CategoriesController', () => {
     update: jest.fn(),
     remove: jest.fn(),
     getUserSummary: jest.fn(),
+    bulkCreate: jest.fn(),
   };
 
   const mockUser = { sub: 'user-123' };
   const mockCategoryId = 'category-123';
+  const mockDate = new Date('2025-10-15T00:00:00.000Z');
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -38,7 +41,6 @@ describe('CategoriesController', () => {
     }).compile();
 
     controller = module.get<CategoriesController>(CategoriesController);
-    service = module.get<CategoriesService>(CategoriesService);
   });
 
   afterEach(() => {
@@ -52,7 +54,7 @@ describe('CategoriesController', () => {
         description: 'Test Description',
         color: '#FF5733',
         icon: 'test-icon',
-        budgetAmount: 500,
+        budgetAmount: 50000,
         isActive: true,
       };
 
@@ -60,11 +62,11 @@ describe('CategoriesController', () => {
         id: mockCategoryId,
         ...createCategoryDto,
         budgetAmount: createCategoryDto.budgetAmount
-          ? BigInt(createCategoryDto.budgetAmount * 100)
-          : BigInt(0), // 500.00 in cents
+          ? BigInt(createCategoryDto.budgetAmount)
+          : BigInt(0),
         userId: mockUser.sub,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: mockDate,
+        updatedAt: mockDate,
       });
 
       mockCategoriesService.create.mockResolvedValue(mockCategory);
@@ -93,8 +95,8 @@ describe('CategoriesController', () => {
           incomeAmount: 5000n,
           transactionCount: 10,
           isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: mockDate,
+          updatedAt: mockDate,
         }),
         new Category({
           id: 'category-2',
@@ -106,8 +108,8 @@ describe('CategoriesController', () => {
           incomeAmount: 0n,
           transactionCount: 5,
           isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: mockDate,
+          updatedAt: mockDate,
         }),
       ];
 
@@ -135,9 +137,9 @@ describe('CategoriesController', () => {
   describe('getSummary', () => {
     it('should return CategoriesSummaryDto', async () => {
       const mockSummary = new CategoriesSummaryDto({
-        totalBudget: '1000',
-        totalSpent: '450',
-        remainingBudget: '700',
+        totalBudget: '1.000,00',
+        totalSpent: '450,00',
+        remainingBudget: '700,00',
       });
 
       mockCategoriesService.getUserSummary.mockResolvedValue(mockSummary);
@@ -148,25 +150,39 @@ describe('CategoriesController', () => {
         mockUser.sub,
       );
       expect(result).toBeInstanceOf(CategoriesSummaryDto);
-      expect(result.totalBudget).toBe('1000.00');
-      expect(result.totalSpent).toBe('450.00');
-      expect(result.remainingBudget).toBe('700.00');
+      expect(result.totalBudget).toBe('1.000,00');
+      expect(result.totalSpent).toBe('450,00');
+      expect(result.remainingBudget).toBe('700,00');
     });
 
     it('should handle zero values in summary', async () => {
       const mockSummary = new CategoriesSummaryDto({
-        totalBudget: '0',
-        totalSpent: '0',
-        remainingBudget: '0',
+        totalBudget: '0,00',
+        totalSpent: '0,00',
+        remainingBudget: '0,00',
       });
 
       mockCategoriesService.getUserSummary.mockResolvedValue(mockSummary);
 
       const result = await controller.getSummary(mockUser);
 
-      expect(result.totalBudget).toBe('0.00');
-      expect(result.totalSpent).toBe('0.00');
-      expect(result.remainingBudget).toBe('0.00');
+      expect(result.totalBudget).toBe('0,00');
+      expect(result.totalSpent).toBe('0,00');
+      expect(result.remainingBudget).toBe('0,00');
+    });
+
+    it('should handle negative remaining budget', async () => {
+      const mockSummary = new CategoriesSummaryDto({
+        totalBudget: '500,00',
+        totalSpent: '750,00',
+        remainingBudget: '-250,00',
+      });
+
+      mockCategoriesService.getUserSummary.mockResolvedValue(mockSummary);
+
+      const result = await controller.getSummary(mockUser);
+
+      expect(result.remainingBudget).toBe('-250,00');
     });
   });
 
@@ -179,8 +195,8 @@ describe('CategoriesController', () => {
         userId: mockUser.sub,
         budgetAmount: 50000n,
         isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: mockDate,
+        updatedAt: mockDate,
       });
 
       mockCategoriesService.findOne.mockResolvedValue(mockCategory);
@@ -238,6 +254,28 @@ describe('CategoriesController', () => {
       );
       expect(result).toBeInstanceOf(CategoryResponseDto);
       expect(result.name).toBe('Updated Category');
+    });
+  });
+
+  describe('bulkCreate', () => {
+    it('should delegate to service and return BulkCreateCategoryResponseDto', async () => {
+      const bulkDto: BulkCreateCategoryDto = {
+        categories: [
+          { name: 'Groceries', budgetAmount: 50000, isActive: true },
+          { name: 'Transport', budgetAmount: 20000, isActive: true },
+        ] as CreateCategoryDto[],
+      };
+
+      mockCategoriesService.bulkCreate.mockResolvedValue({ count: 2 });
+
+      const result = await controller.bulkCreate(mockUser, bulkDto);
+
+      expect(mockCategoriesService.bulkCreate).toHaveBeenCalledWith(
+        mockUser.sub,
+        bulkDto.categories,
+      );
+      expect(result).toBeInstanceOf(BulkCreateCategoryResponseDto);
+      expect(result.count).toBe(2);
     });
   });
 

@@ -2,16 +2,27 @@ import { Category } from '@/categories/entities/category.entity';
 import { CategoryResponseDto } from '@/categories/dto';
 import { bigintToMoneyString } from '@/common/utils/bigint-transform';
 
+function normalizeNullableVisual(
+  value: string | null | undefined,
+): string | null {
+  if (value == null) {
+    return null;
+  }
+
+  return value.trim() === '' ? null : value;
+}
+
 export function fromEntity(category: Category): CategoryResponseDto {
   return new CategoryResponseDto({
     id: category.id,
     name: category.name,
     description: category.description,
-    color: category.color,
-    icon: category.icon,
+    color: normalizeNullableVisual(category.color),
+    icon: normalizeNullableVisual(category.icon),
     budgetAmount: bigintToMoneyString(category.budgetAmount),
     userId: category.userId,
     isActive: category.isActive,
+    isDefault: category.isDefault ?? false,
     createdAt: category.createdAt,
     updatedAt: category.updatedAt,
     spentAmount: bigintToMoneyString(category.spentAmount),

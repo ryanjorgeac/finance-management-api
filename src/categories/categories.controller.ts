@@ -31,6 +31,8 @@ import {
   CreateCategoryDto,
   UpdateCategoryDto,
   CategoryResponseDto,
+  BulkCreateCategoryDto,
+  BulkCreateCategoryResponseDto,
 } from '@/categories/dto';
 import { fromEntities, fromEntity } from '@/common/utils/category-mapper';
 
@@ -41,6 +43,35 @@ import { fromEntities, fromEntity } from '@/common/utils/category-mapper';
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
+
+  @Post('bulk')
+  @ApiOperation({ summary: 'Create multiple categories at once' })
+  @ApiBody({ type: BulkCreateCategoryDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Categories created successfully',
+    type: BulkCreateCategoryResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - validation error',
+    type: ExceptionResponseDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'The default category name is reserved',
+    type: ExceptionResponseDto,
+  })
+  async bulkCreate(
+    @GetUser() user: { sub: string },
+    @Body() bulkCreateCategoryDto: BulkCreateCategoryDto,
+  ): Promise<BulkCreateCategoryResponseDto> {
+    const result = await this.categoriesService.bulkCreate(
+      user.sub,
+      bulkCreateCategoryDto.categories,
+    );
+    return new BulkCreateCategoryResponseDto({ count: result.count });
+  }
 
   @Post()
   @ApiOperation({ summary: 'Create a new category' })
@@ -155,6 +186,11 @@ export class CategoriesController {
   @ApiResponse({
     status: 401,
     description: 'Unauthorized',
+    type: ExceptionResponseDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'The default category cannot be modified',
     type: ExceptionResponseDto,
   })
   @ApiResponse({
