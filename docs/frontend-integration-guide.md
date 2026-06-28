@@ -80,7 +80,7 @@ Example response:
 {
   "id": "category-id",
   "name": "Sem categoria",
-  "description": "Default category for transactions from deleted categories",
+  "description": "Categoria padrão para transações sem categorias",
   "color": null,
   "icon": null,
   "budgetAmount": "0,00",

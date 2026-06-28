@@ -4,7 +4,7 @@ const DEFAULT_CATEGORY_NAME = 'Sem categoria';
 
 const DEFAULT_CATEGORY_DATA = {
   name: DEFAULT_CATEGORY_NAME,
-  description: 'Default category for transactions from deleted categories',
+  description: 'Categoria padrão para transações sem categorias',
   color: null,
   icon: null,
   budgetAmount: 0,
