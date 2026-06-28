@@ -82,14 +82,12 @@ describe('User Entity', () => {
         lastName: 'Doe',
       });
 
-      // This mimics what happens when the entity is serialized
-      const serialized = JSON.parse(JSON.stringify(user)) as Record<
-        string,
-        unknown
-      >;
+      const { instanceToPlain } = require('class-transformer') as {
+        instanceToPlain: (value: unknown) => unknown;
+      };
+      const serialized = instanceToPlain(user) as Record<string, unknown>;
 
-      expect(serialized['password']).toBe('secret_password');
+      expect(serialized['password']).toBeUndefined();
       expect(serialized['email']).toBe('test@example.com');
-    });
   });
 });
