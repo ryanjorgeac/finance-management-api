@@ -18,7 +18,7 @@
     "db:test:logs": "docker compose logs -f test-db",
     "db:test:exec": "docker compose exec test-db psql -U postgres",
     "db:test:restart": "npm run db:test:rm && npm run db:test:up && sleep 2 && npm run prisma:test:deploy",
-    "build": "nest build",
+    "build": "npx prisma generate && nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
