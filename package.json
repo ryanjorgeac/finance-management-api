@@ -85,16 +85,5 @@
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
-  "packageManager": "pnpm@11.9.0",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@prisma/client",
-      "@prisma/engines",
-      "@scarf/scarf",
-      "@swc/core",
-      "argon2",
-      "bcrypt",
-      "prisma"
-    ]
-  }
+  "packageManager": "pnpm@11.9.0"
 }

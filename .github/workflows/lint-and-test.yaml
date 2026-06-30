@@ -23,14 +23,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version-file: .nvmrc
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install Dependencies
-        run: npm install
+        run: pnpm install
 
       - name: Run Linter
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Run Tests
-        run: npm test
+        run: pnpm test
         
