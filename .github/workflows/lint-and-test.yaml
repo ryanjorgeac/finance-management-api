@@ -18,19 +18,14 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node.js / pnpm
+        uses: pnpm/action-setup@v6
         with:
-          node-version-file: .nvmrc
-          cache: 'pnpm'
-
+          cache: true
       - name: Install Dependencies
         run: pnpm install
-
       - name: Run Linter
         run: pnpm run lint
-
       - name: Run Tests
         run: pnpm test
         
