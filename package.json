@@ -1,23 +1,16 @@
 {
   "name": "finance-management-api",
-  "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "version": "1.0.0",
+  "description": "NestJS API for finance management",
+  "author": "ryanjorgeac",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "prisma:dev:deploy": "npx prisma migrate deploy",
-    "db:dev:rm": "docker compose rm dev-db -s -f -v",
-    "db:dev:up": "docker compose up -d dev-db",
-    "db:dev:logs": "docker compose logs -f dev-db",
-    "db:dev:exec": "docker compose exec dev-db psql -U postgres",
-    "db:dev:restart": "npm run db:dev:rm && npm run db:dev:up && sleep 1 && npx prisma migrate deploy",
     "prisma:test:deploy": "dotenv -e .env.test -- npx prisma migrate deploy",
-    "db:test:rm": "docker compose rm test-db -s -f -v",
-    "db:test:up": "docker compose up -d test-db",
-    "db:test:logs": "docker compose logs -f test-db",
-    "db:test:exec": "docker compose exec test-db psql -U postgres",
-    "db:test:restart": "npm run db:test:rm && npm run db:test:up && sleep 2 && npm run prisma:test:deploy",
     "build": "npx prisma generate && nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -91,5 +84,6 @@
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
-  }
+  },
+  "packageManager": "pnpm@11.9.0"
 }
