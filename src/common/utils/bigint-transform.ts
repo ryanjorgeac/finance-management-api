@@ -5,17 +5,19 @@ export const bigintToString = (value: bigint): string => {
   return value.toString();
 };
 
-const brlFormatter = new Intl.NumberFormat('pt-BR', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
 export const bigintToMoneyString = (value: bigint): string => {
   if (value === null || value === undefined) {
     return '0,00';
   }
-  const valueInReais = value / 100n;
-  return brlFormatter.format(valueInReais);
+  const isNegative = value < 0n;
+  const absoluteValue = isNegative ? -value : value;
+  const reais = absoluteValue / 100n;
+  const cents = absoluteValue % 100n;
+  const formattedReais = reais.toLocaleString('pt-BR');
+  const formattedCents = cents.toString().padStart(2, '0');
+  const valueInReais = `${formattedReais},${formattedCents}`;
+
+  return isNegative ? `-${valueInReais}` : valueInReais;
 };
 
 export const stringToBigint = ({ value }: { value: string }): bigint => {
