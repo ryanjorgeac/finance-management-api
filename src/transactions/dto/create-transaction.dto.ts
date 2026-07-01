@@ -5,6 +5,8 @@ import {
   IsDate,
   IsInt,
   Min,
+  Max,
+  IsEnum,
 } from 'class-validator';
 import { TransactionType } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
@@ -17,6 +19,7 @@ export class CreateTransactionDto {
   @IsNotEmpty()
   @IsInt()
   @Min(1)
+  @Max(9999999999999)
   amountCents: number;
 
   @ApiProperty({
@@ -24,7 +27,7 @@ export class CreateTransactionDto {
     example: 'INCOME',
   })
   @IsNotEmpty()
-  @IsString()
+  @IsEnum(TransactionType)
   type: TransactionType;
 
   @ApiProperty({

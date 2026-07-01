@@ -7,6 +7,8 @@ import {
   Min,
   IsOptional,
   IsEnum,
+  MaxLength,
+  Max,
 } from 'class-validator';
 import { TransactionType, CommitmentFrequency } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
@@ -19,6 +21,7 @@ export class CreateCommitmentDto {
   @IsNotEmpty()
   @IsInt()
   @Min(1)
+  @Max(9999999999999)
   amountCents: number;
 
   @ApiProperty({
@@ -36,6 +39,7 @@ export class CreateCommitmentDto {
   })
   @IsNotEmpty()
   @IsString()
+  @MaxLength(60)
   description: string;
 
   @ApiProperty({
