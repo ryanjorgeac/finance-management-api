@@ -6,6 +6,7 @@ import {
   IsInt,
   Min,
   MaxLength,
+  Max,
 } from 'class-validator';
 
 export class CreateCategoryDto {
@@ -15,7 +16,7 @@ export class CreateCategoryDto {
   })
   @IsNotEmpty()
   @IsString()
-  @MaxLength(20)
+  @MaxLength(40)
   name: string;
 
   @ApiProperty({
@@ -53,6 +54,7 @@ export class CreateCategoryDto {
   })
   @IsInt()
   @Min(0)
+  @Max(9999999999999)
   budgetAmount: number;
 
   @ApiProperty({
